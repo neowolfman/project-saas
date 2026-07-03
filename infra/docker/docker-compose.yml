@@ -22,7 +22,8 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-saas}
       POSTGRES_USER: ${POSTGRES_USER:-app}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      APP_API_PASSWORD: ${APP_API_PASSWORD:?APP_API_PASSWORD is required}
     command:
       - "postgres"
       - "-c"
@@ -37,6 +38,7 @@ services:
       - "wal_buffers=16MB"
     volumes:
       - pg-data:/var/lib/postgresql/data
+      - ../postgres/01-create-app-role.sh:/docker-entrypoint-initdb.d/01-create-app-role.sh:ro
     networks: [data-net]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-saas}"]
@@ -87,7 +89,7 @@ services:
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     networks: [data-net]
@@ -111,7 +113,7 @@ services:
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
     volumes:
       - minio-data:/data
     networks: [data-net]
@@ -138,10 +140,9 @@ services:
       - "/bin/sh"
       - "-c"
       - |
-        mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin} &&
-        mc mb -p local/audit-ledger-archive &&
-        mc version enable local/audit-ledger-archive &&
-        mc retention set COMPLIANCE 2555d local/audit-ledger-archive &&
+        mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required} &&
+        mc mb -p --with-lock local/audit-ledger-archive &&
+        mc retention set --default COMPLIANCE 2555d local/audit-ledger-archive &&
         mc anonymous set none local/audit-ledger-archive
     restart: "no"
 
@@ -153,7 +154,7 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres:5432/${POSTGRES_DB:-saas}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-saas}
     command: ["-c", "migrations/alembic.ini", "upgrade", "head"]
     entrypoint: ["/opt/venv/bin/alembic"]
     networks: [data-net]

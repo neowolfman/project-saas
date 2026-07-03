@@ -208,7 +208,7 @@ def upgrade() -> None:
         project_id     UUID NOT NULL REFERENCES projects(project_id) ON DELETE CASCADE,
         contract_value NUMERIC(14,2) NOT NULL DEFAULT 0,
         cost_devengado NUMERIC(14,2) NOT NULL DEFAULT 0,
-        margin_pct     NUMERIC(7,2) GENERATED ALWAYS AS
+        margin_pct     NUMERIC(9,2) GENERATED ALWAYS AS
             (CASE WHEN contract_value = 0 THEN 0
                   ELSE ((contract_value - cost_devengado) / contract_value) * 100
              END) STORED,
@@ -243,7 +243,6 @@ def upgrade() -> None:
     );
     """)
 
-    op.execute("CREATE INDEX idx_users_tenant        ON users (tenant_id);")
     op.execute("CREATE INDEX idx_projects_tenant     ON projects (tenant_id);")
     op.execute("CREATE INDEX idx_tasks_tenant        ON tasks (tenant_id);")
     op.execute("CREATE INDEX idx_tasks_project       ON tasks (project_id);")
@@ -289,6 +288,20 @@ def upgrade() -> None:
     WITH NO DATA;
     """)
     op.execute("""
+    SELECT add_continuous_aggregate_policy('margin_daily',
+        start_offset       => INTERVAL '7 days',
+        end_offset         => INTERVAL '1 hour',
+        schedule_interval  => INTERVAL '1 hour',
+        if_not_exists      => TRUE);
+    """)
+    op.execute("""
+    SELECT add_continuous_aggregate_policy('usage_daily',
+        start_offset       => INTERVAL '30 days',
+        end_offset         => INTERVAL '1 hour',
+        schedule_interval  => INTERVAL '1 hour',
+        if_not_exists      => TRUE);
+    """)
+    op.execute("""
     CREATE VIEW v_active_projects AS
     SELECT project_id, tenant_id, lead_user_id, name, status, created_at
     FROM projects
@@ -299,6 +312,7 @@ def upgrade() -> None:
                 "financial_contracts", "invoices", "usage_meters",
                 "margin_snapshot", "sla_risk_snapshot"):
         op.execute(f"ALTER TABLE {tbl} ENABLE ROW LEVEL SECURITY;")
+        op.execute(f"ALTER TABLE {tbl} FORCE ROW LEVEL SECURITY;")
         op.execute(f"""
         CREATE POLICY tenant_isolation ON {tbl}
             USING (tenant_id = current_setting('app.current_tenant', true)::uuid)
@@ -306,6 +320,7 @@ def upgrade() -> None:
         """)
 
     op.execute("ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE audit_log FORCE ROW LEVEL SECURITY;")
     op.execute("""
     CREATE POLICY tenant_audit_read ON audit_log
         FOR SELECT
@@ -331,12 +346,18 @@ def upgrade() -> None:
     ) RETURNS bigint
     LANGUAGE plpgsql SECURITY DEFINER AS $$
     DECLARE
+        v_ctx   text := current_setting('app.current_tenant', true);
         v_prev  bytea;
         v_hash  bytea;
         v_event uuid := gen_random_uuid();
         v_seq   bigint;
     BEGIN
-        SELECT event_hash INTO v_prev FROM audit_log ORDER BY seq DESC LIMIT 1;
+        IF v_ctx IS NOT NULL AND p_tenant::text <> v_ctx THEN
+            RAISE EXCEPTION 'audit.tenant_mismatch';
+        END IF;
+        PERFORM pg_advisory_xact_lock(hashtextextended('audit:' || p_tenant::text, 0));
+        SELECT event_hash INTO v_prev FROM audit_log
+            WHERE tenant_id = p_tenant ORDER BY seq DESC LIMIT 1;
         IF v_prev IS NULL THEN
             v_prev := decode('', 'hex');
         END IF;
@@ -388,6 +409,28 @@ def upgrade() -> None:
         FOR EACH ROW
         WHEN (OLD.* IS DISTINCT FROM NEW.*)
         EXECUTE FUNCTION set_updated_at();
+    """)
+
+    op.execute("REVOKE EXECUTE ON FUNCTION set_tenant(uuid) FROM PUBLIC;")
+    op.execute("REVOKE EXECUTE ON FUNCTION append_audit_event(uuid, uuid, text, text, text, text, jsonb) FROM PUBLIC;")
+    op.execute("REVOKE EXECUTE ON FUNCTION enqueue_sla_eval(uuid, uuid, integer) FROM PUBLIC;")
+    op.execute("""
+    DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_api') THEN
+            GRANT SELECT, INSERT, UPDATE, DELETE ON
+                tenants, users, user_roles, projects, tasks, time_logs,
+                financial_contracts, invoices, usage_meters, margin_snapshot,
+                sla_risk_snapshot, sla_eval_queue, processed_events, outbox
+                TO app_api;
+            GRANT SELECT ON audit_log TO app_api;
+            GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_api;
+            GRANT EXECUTE ON FUNCTION set_tenant(uuid) TO app_api;
+            GRANT EXECUTE ON FUNCTION append_audit_event(uuid, uuid, text, text, text, text, jsonb) TO app_api;
+            GRANT EXECUTE ON FUNCTION enqueue_sla_eval(uuid, uuid, integer) TO app_api;
+        END IF;
+    END
+    $$;
     """)
 
 
