@@ -2,6 +2,9 @@
 .DS_Store
 Thumbs.db
 
+# ---------- Agent tooling (local skills) ----------
+.agents/
+
 # ---------- Editors ----------
 .vscode/
 .idea/

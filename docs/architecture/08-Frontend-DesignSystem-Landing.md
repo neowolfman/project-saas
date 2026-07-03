@@ -102,8 +102,10 @@ Componente React con lógica de cálculo en cliente (autocontenido, sin llamadas
 'use client';
 import { useMemo, useState } from 'react';
 
+// Moneda: pesos chilenos (CLP). Referencia 1 USD ≈ 950 CLP.
+const CLP = new Intl.NumberFormat('es-CL');
 const DEFAULTS = {
-  monthlyContractValue: 100_000,
+  monthlyContractValue: 95_000_000,  // ≈ USD 100.000
   currentOverrunPct: 0.12,     // 12% de overrun hoy
   detectionImprovementPct: 0.6, // −60% de overrun con detección temprana
 };
@@ -120,10 +122,10 @@ export function RoiCalculator() {
 
   return (
     <div className="rounded-lg border p-6">
-      <label>Valor mensual de contratos (USD)
-        <input type="range" min={10000} max={1000000} step={10000}
+      <label>Valor mensual de contratos (CLP)
+        <input type="range" min={9_500_000} max={950_000_000} step={1_000_000}
                value={value} onChange={(e) => setValue(+e.target.value)} />
-        <span>${value.toLocaleString()}</span>
+        <span>${CLP.format(value)}</span>
       </label>
       <label>Overrun estimado hoy
         <input type="range" min={0.02} max={0.30} step={0.01}
@@ -131,7 +133,7 @@ export function RoiCalculator() {
         <span>{Math.round(overrun * 100)}%</span>
       </label>
       <p className="mt-4 text-2xl font-semibold text-brand-500">
-        Ahorro mensual estimado: ${savings.toLocaleString()}
+        Ahorro mensual estimado (CLP): ${CLP.format(savings)}
       </p>
     </div>
   );

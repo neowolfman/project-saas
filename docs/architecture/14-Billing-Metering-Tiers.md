@@ -28,13 +28,15 @@ flowchart LR
 
 ### Meters (catálogo de referencia)
 
-| Meter | Unidad | Precio referencial | Origen |
+> **Moneda:** todos los valores de este SAD se expresan en **pesos chilenos (CLP)**. Conversión de referencia: **1 USD ≈ 950 CLP**. Decimales con coma (convención CL).
+
+| Meter | Unidad | Precio referencial (CLP) | Origen |
 |---|---|---|---|
-| `api.calls` | request | $0.0001 | Edge/backend |
-| `storage.gb` | GB·mes | $0.08 | MinIO/PG |
-| `ai.tokens` | 1k tokens | $0.002 | Inferencia analítica (`07`) |
+| `api.calls` | 1.000 requests | $95 | Edge/backend |
+| `storage.gb` | GB·mes | $76 | MinIO/PG |
+| `ai.tokens` | 1.000 tokens | $1,90 | Inferencia analítica (`07`) |
 | `tracked.hours.vip` | hora | incluido / extra | Timer/Git (`06`) |
-| `search.queries` | query | $0.0005 | OpenSearch |
+| `search.queries` | 1.000 queries | $475 | OpenSearch |
 
 ### Modelo de datos de metering (TimescaleDB)
 ```sql
@@ -95,7 +97,7 @@ async def emit_usage(openmeter, tenant_id: str, meter_code: str, total: float, d
 
 | Dimensión | Starter | Growth | Enterprise | VIP / Custom |
 |---|---|---|---|---|
-| **Tarifa base (ref.)** | $49/mes | $199/mes | $1.499/mes | A contrato |
+| **Tarifa base (ref.)** | $46.600/mes | $189.000/mes | $1.424.000/mes | A contrato |
 | **Usuarios incluidos** | hasta 10 | hasta 50 | hasta 500 | ilimitado (acordado) |
 | **Aislamiento de datos** | Shared schema (`tenant_id`) | Shared schema | Shared DB / *isolated schema* | **DB física dedicada** |
 | **SLA** | mejor esfuerzo | 99,5 % | 99,9 % | **99,99 %** + penalty |
