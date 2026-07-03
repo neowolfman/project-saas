@@ -1,0 +1,28 @@
+%% C4 Level 1 — System Context
+%% Diagrama C4 de Contexto: actores y sistema, con dependencias externas.
+C4Context
+title SaaS PM+FinOps — Diagrama de Contexto (Nivel 1)
+
+Person(admin, "Tenant Admin", "Administra su organización (tenant), usuarios y proyectos")
+Person(dev, "Developer / QA", "Trabaja en tareas y registra tiempo (UI, timer o Git)")
+Person(client, "Cliente Externo", "Consulta avance y aprueba entregables (solo lectura)")
+Person(superadmin, "SuperAdmin", "Operación de plataforma (break-glass, MFA hardware)")
+
+System(plat, "Plataforma SaaS PM+FinOps", "Gestión de proyectos con convergencia financiera nativa: margen, SLA y metering en tiempo real, multi-tenant con aislamiento enterprise")
+
+System_Ext(github, "GitHub / GitLab", "Repositorios que emiten webhooks de commits/PRs")
+System_Ext(idp, "IdP Empresarial (SAML/OIDC)", "SSO de los tenants Enterprise/VIP")
+System_Ext(stripe, "Stripe Billing", "Facturación y cobros")
+System_Ext(email, "Proveedor de Email", "Bienvenida, notificaciones y facturas")
+
+Rel(admin, plat, "Usa", "HTTPS")
+Rel(dev, plat, "Registra trabajo, dashboards", "HTTPS / SSE")
+Rel(client, plat, "Consulta avances", "HTTPS")
+Rel(superadmin, plat, "Opera plataforma", "HTTPS, break-glass")
+Rel(plat, github, "Recibe webhooks (commits/PRs)", "HTTPS, HMAC")
+Rel(plat, idp, "Federa identidad (SSO)", "SAML 2.0 / OIDC")
+Rel(plat, stripe, "Cobra por consumo medido", "HTTPS API")
+Rel(plat, email, "Envía notificaciones", "SMTP/API")
+
+UpdateRelStyle(admin, plat, $offsetX="-30", $offsetY="-20")
+UpdateRelStyle(dev, plat, $offsetX="-20", $offsetY="10")

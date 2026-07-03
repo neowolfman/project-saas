@@ -1,0 +1,133 @@
+%% Modelo Entidad-Relación del dominio core
+%% PK = clave primaria, FK = clave foránea. Tipos en notación SQL.
+erDiagram
+  TENANTS ||--o{ USERS : "tiene"
+  TENANTS ||--o{ PROJECTS : "posee"
+  TENANTS ||--o{ FINANCIAL_CONTRACTS : "asocia"
+  TENANTS ||--o{ INVOICES : "factura a"
+  TENANTS ||--o{ AUDIT_LOGS : "audita"
+  TENANTS ||--o{ USAGE_METERS : "consume"
+
+  USERS ||--o{ PROJECTS : "lidera"
+  USERS ||--o{ TASKS : "asignada"
+  USERS ||--o{ TIME_LOGS : "registra"
+  USERS }o--o{ ROLES : "tiene"
+  USERS ||--o{ AUDIT_LOGS : "es actor"
+
+  PROJECTS ||--o{ TASKS : "contiene"
+  PROJECTS ||--|| FINANCIAL_CONTRACTS : "vinculado a"
+  PROJECTS ||--o{ TIME_LOGS : "acumula"
+
+  TASKS ||--o{ TIME_LOGS : "origina"
+
+  FINANCIAL_CONTRACTS ||--o{ TIME_LOGS : "devenga"
+  FINANCIAL_CONTRACTS ||--o{ INVOICES : "genera"
+
+  USAGE_METERS ||--o{ INVOICES : "alimenta"
+
+  TENANTS {
+    uuid tenant_id PK
+    string slug UK
+    string tier "starter|growth|enterprise|vip"
+    string db_target "shared|schema:x|db:x"
+    string region
+    timestamptz created_at
+  }
+
+  USERS {
+    uuid user_id PK
+    uuid tenant_id FK
+    string email UK
+    string password_hash "argon2id"
+    boolean mfa_enabled
+    string status "active|suspended"
+    timestamptz created_at
+  }
+
+  ROLES {
+    int role_id PK
+    string name "9 roles"
+    string description
+  }
+
+  PROJECTS {
+    uuid project_id PK
+    uuid tenant_id FK
+    uuid lead_user_id FK
+    string name
+    string status "active|closed"
+    timestamptz created_at
+  }
+
+  TASKS {
+    bigint task_id PK
+    uuid project_id FK
+    uuid assignee_user_id FK
+    string title
+    string state "todo|doing|done"
+    int story_points
+    boolean client_visible
+    timestamptz updated_at
+  }
+
+  TIME_LOGS {
+    bigint id PK
+    uuid tenant_id FK
+    uuid user_id FK
+    uuid project_id FK
+    bigint task_id FK
+    numeric hours "NUMERIC(5,2)"
+    numeric role_cost "NUMERIC(10,2)"
+    numeric amount "NUMERIC(12,2)"
+    string evidence "manual|timer|git"
+    string source_ref
+    timestamptz logged_at
+  }
+
+  FINANCIAL_CONTRACTS {
+    uuid contract_id PK
+    uuid tenant_id FK
+    uuid project_id FK
+    numeric contract_value "NUMERIC(14,2)"
+    numeric margin_target_pct "NUMERIC(5,2)"
+    jsonb sla_terms
+    date window_start
+    date window_end
+  }
+
+  INVOICES {
+    uuid invoice_id PK
+    uuid tenant_id FK
+    uuid contract_id FK
+    numeric subtotal "NUMERIC(14,2)"
+    numeric tax "NUMERIC(14,2)"
+    numeric total "NUMERIC(14,2)"
+    string currency
+    string status "draft|issued|paid|failed"
+    timestamptz issued_at
+  }
+
+  AUDIT_LOGS {
+    bigint seq PK
+    uuid event_id UK
+    uuid tenant_id FK
+    uuid actor_id FK
+    string action
+    string resource
+    string resource_id
+    string outcome "success|denied|error"
+    jsonb metadata
+    bytea prev_hash
+    bytea event_hash
+    timestamptz occurred_at
+  }
+
+  USAGE_METERS {
+    bigint id PK
+    uuid tenant_id FK
+    string meter_code "api.calls|ai.tokens|..."
+    numeric quantity "NUMERIC(18,4)"
+    timestamptz window_start
+    timestamptz window_end
+    timestamptz recorded_at
+  }

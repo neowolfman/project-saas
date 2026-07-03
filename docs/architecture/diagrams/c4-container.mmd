@@ -1,0 +1,59 @@
+%% C4 Level 2 — Container Diagram
+%% Vista de contenedores: frontends, backend/workers, datos, mensajería, storage, observabilidad y sistemas externos.
+C4Container
+title SaaS PM+FinOps — Diagrama de Contenedores (Nivel 2)
+
+System_Boundary(s0, "Plataforma SaaS PM+FinOps") {
+
+  Container(landing, "Landing (SSG/ISR)", "Next.js, TypeScript", "Marketing, ROI calculator, pricing; SEO")
+  Container(app, "App (SPA)", "Next.js, TypeScript, Tailwind, shadcn/ui", "Producto PM+FinOps; dashboards de margen/SLA")
+
+  Container(api, "Backend API", "FastAPI, Python 3.12", "REST autenticada; webhooks Git; tenant context; RBAC/ABAC")
+  Container(workers, "Workers", "FastStream, Python 3.12", "Consumidores RabbitMQ: Outbox relay, proyecciones, saga billing, SLA")
+
+  ContainerDb(pg, "PostgreSQL (shared)", "PostgreSQL 16", "Relacional compartido (Starter/Growth, RLS)")
+  ContainerDb(pgvip, "PostgreSQL (VIP)", "PostgreSQL 16", "BBDD física dedicada por tenant VIP")
+  ContainerDb(tsdb, "TimescaleDB", "TimescaleDB (PG16)", "Time logs y metering (hypertables)")
+  ContainerDb(redis, "Redis / Valkey", "Valkey 7", "Caché L2, sesiones, RBAC")
+
+  Container(broker, "RabbitMQ", "RabbitMQ 3.13", "Mensajería: eventos de dominio, DLX, colas prioritarias VIP")
+  Container(minio, "MinIO", "MinIO (S3)", "Contratos y audit ledger (WORM, object-lock)")
+  Container(os, "OpenSearch", "OpenSearch 2", "Búsqueda full-text sobre tareas/proyectos")
+  Container(om, "OpenMeter", "OpenMeter", "Metering: agregación de uso")
+
+  Container(otel, "OTel Collector", "OpenTelemetry", "Recolecta métricas, logs, trazas")
+  Container(obs, "Observabilidad", "Prometheus, Loki, Tempo, Grafana", "Métricas, logs y trazas correlacionadas")
+}
+
+System_Ext(github, "GitHub / GitLab")
+System_Ext(idp, "IdP (SAML/OIDC)")
+System_Ext(stripe, "Stripe Billing")
+System_Ext(edge, "Traefik (Edge / TLS)")
+
+Rel(edge, landing, "Enruta '/' ", "HTTPS")
+Rel(edge, app, "Enruta '/app' ", "HTTPS")
+Rel(edge, api, "Enruta '/api' ", "HTTPS")
+Rel(landing, api, "Leads / signup", "HTTPS")
+Rel(app, api, "CRUD + tiempo real", "HTTPS / SSE")
+Rel(app, api, "X-Tenant-Id", "")
+
+Rel(api, pg, "Lee/escribe (shared, RLS)", "asyncpg")
+Rel(api, pgvip, "Lee/escribe (VIP dedicada)", "asyncpg")
+Rel(api, tsdb, "Time logs / metering", "asyncpg")
+Rel(api, redis, "Caché / sesiones", "RESP3")
+Rel(api, broker, "Publica (vía Outbox)", "AMQP")
+Rel(api, minio, "Exporta audit WORM", "S3 API")
+Rel(api, os, "Indexa/busca", "HTTPS")
+
+Rel(workers, broker, "Consume eventos", "AMQP")
+Rel(workers, pg, "Proyecciones / saga", "asyncpg")
+Rel(workers, tsdb, "Agregados metering", "asyncpg")
+Rel(workers, om, "Emite uso", "HTTPS")
+Rel(workers, stripe, "Cobra (Saga)", "HTTPS")
+
+Rel(api, github, "Webhooks (HMAC)", "HTTPS")
+Rel(api, idp, "SSO", "SAML 2.0 / OIDC")
+Rel(om, obs, "métricas/trazas", "OTLP")
+Rel(api, otel, "telemetría", "OTLP")
+Rel(workers, otel, "telemetría", "OTLP")
+Rel(otel, obs, "metrics/logs/traces", "OTLP")
