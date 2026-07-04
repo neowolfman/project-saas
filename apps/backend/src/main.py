@@ -1,6 +1,6 @@
 from apps.backend.src.database import api_session_factory
 from apps.backend.src.middleware.tenant import TenantContextMiddleware
-from apps.backend.src.routers import auth, projects, tasks
+from apps.backend.src.routers import auth, financial_contracts, projects, tasks, time_logs, webhooks
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -49,6 +49,9 @@ async def test_rls_projects() -> list[dict[str, str]]:
 app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
+app.include_router(time_logs.router)
+app.include_router(financial_contracts.router)
+app.include_router(webhooks.router)
 
 
 @app.get("/health")

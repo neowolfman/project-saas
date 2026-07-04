@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "change_me_to_a_very_secure_random_key_in_production"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 horas
+    GIT_WEBHOOK_SECRET: str = "change_me_git_webhook_secret_in_production"
     ENV: str = "development"
 
     @property
