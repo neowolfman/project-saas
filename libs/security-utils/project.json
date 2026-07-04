@@ -1,0 +1,21 @@
+{
+  "name": "security-utils",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/security-utils",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python -m ruff check libs/security-utils"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python -m mypy libs/security-utils"
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:shared", "type:lib-shared"]
+}

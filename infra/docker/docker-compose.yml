@@ -188,7 +188,8 @@ services:
       - ../../:/app
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-saas}
-      PYTHONPATH: /app:/app/libs/ddd-core:/app/libs/db-clients
+      APP_API_PASSWORD: ${APP_API_PASSWORD:?APP_API_PASSWORD is required}
+      PYTHONPATH: /app:/app/libs/ddd-core:/app/libs/db-clients:/app/libs/security-utils
       ENV: development
     entrypoint: ["/bin/sh", "-c"]
     command: ["tail -f /dev/null"]

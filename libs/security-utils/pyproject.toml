@@ -1,0 +1,9 @@
+[project]
+name = "saas-security-utils"
+version = "0.1.0"
+description = "Security and hashing utilities for SaaS PM+FinOps monorepo"
+requires-python = ">=3.12"
+dependencies = [
+    "passlib[bcrypt]>=1.7.4",
+    "python-jose[cryptography]>=3.3.0"
+]
