@@ -9,5 +9,11 @@ Usage:
 """
 
 from faststream import FastStream
+from apps.workers.src.topology import broker
+from apps.workers.src.subscribers.git_consumer import router as git_router
+from apps.workers.src.subscribers.margin_consumer import router as margin_router
 
-app = FastStream(title="saas-workers")
+broker.include_router(git_router)
+broker.include_router(margin_router)
+
+app = FastStream(broker, title="saas-workers", version="1.0.0")

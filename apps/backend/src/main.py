@@ -1,14 +1,38 @@
+import asyncio
+from contextlib import asynccontextmanager, suppress
+
+from apps.backend.src.config import settings
 from apps.backend.src.database import api_session_factory
 from apps.backend.src.middleware.tenant import TenantContextMiddleware
 from apps.backend.src.routers import auth, financial_contracts, projects, tasks, time_logs, webhooks
+from apps.backend.src.shared.outbox.relay import run_outbox_relay
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from faststream.rabbit import RabbitBroker
 from sqlalchemy import text
+
+broker = RabbitBroker(settings.rabbitmq_url)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Conectar al broker de RabbitMQ
+    await broker.connect()
+    # Iniciar la tarea de background de Outbox Relay
+    relay_task = asyncio.create_task(run_outbox_relay(api_session_factory, broker))
+    yield
+    # Apagar la tarea de background y cerrar la conexión del broker
+    relay_task.cancel()
+    with suppress(asyncio.CancelledError):
+        await relay_task
+    await broker.close()
+
 
 app = FastAPI(
     title="SaaS PM+FinOps Backend API",
     description="API Core para la plataforma de Gestión de Proyectos y Finanzas Multi-Tenant",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Configuración de CORS
