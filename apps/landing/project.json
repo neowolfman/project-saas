@@ -1,0 +1,14 @@
+{
+  "name": "landing",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/landing",
+  "projectType": "application",
+  "targets": {
+    "dev": { "executor": "@nx/next:dev", "options": { "dev": true } },
+    "build": { "executor": "@nx/next:build", "outputs": ["{projectRoot}/.next", "{projectRoot}/dist"] },
+    "start": { "executor": "@nx/next:start" },
+    "lint": { "executor": "@nx/eslint:lint" },
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "tsc --noEmit -p tsconfig.json" } }
+  },
+  "tags": ["type:app", "scope:frontend"]
+}

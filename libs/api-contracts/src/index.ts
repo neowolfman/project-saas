@@ -1,0 +1,11 @@
+export interface Tenant { tenant_id: string; slug: string; tier: "starter"|"growth"|"enterprise"|"vip"; db_target: string; region: string; created_at: string; }
+export interface User { user_id: string; tenant_id: string; email: string; mfa_enabled: boolean; status: string; created_at: string; }
+export interface Role { role_id: number; name: string; description: string; }
+export interface Project { project_id: string; tenant_id: string; lead_user_id: string; name: string; status: string; created_at: string; }
+export interface Task { task_id: number; tenant_id: string; project_id: string; assignee_user_id: string; title: string; state: "todo"|"doing"|"done"; story_points?: number; client_visible: boolean; updated_at: string; }
+export interface TimeLog { id: number; tenant_id: string; user_id: string; project_id: string; task_id: number; hours: number; role_cost: number; amount: number; evidence: "manual"|"timer"|"git:commit"|"git:pr"; source_ref?: string; logged_at: string; }
+export interface FinancialContract { contract_id: string; tenant_id: string; project_id: string; contract_value: number; margin_target_pct: number; sla_terms: Record<string, unknown>; window_start: string; window_end: string; }
+export interface Invoice { invoice_id: string; tenant_id: string; contract_id: string; subtotal: number; tax: number; total: number; currency: string; status: "draft"|"issued"|"paid"|"failed"; issued_at: string; }
+export interface AuditLog { seq: number; event_id: string; tenant_id: string; actor_id: string; action: string; resource: string; resource_id: string; outcome: "success"|"denied"|"error"; metadata: Record<string, unknown>; prev_hash: string; event_hash: string; occurred_at: string; }
+export interface UsageMeter { id: number; tenant_id: string; meter_code: string; quantity: number; window_start: string; window_end: string; recorded_at: string; }
+export interface SlaEvalQueue { id: number; tenant_id: string; project_id: string; priority: number; status: "pending"|"running"|"done"|"failed"; enqueued_at: string; }

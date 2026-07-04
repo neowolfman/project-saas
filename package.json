@@ -1,0 +1,33 @@
+{
+  "name": "saas-pm-finops",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "build": "nx build",
+    "dev": "nx run-many -t dev",
+    "lint": "nx run-many -t lint",
+    "test": "nx run-many -t test",
+    "typecheck": "nx run-many -t typecheck",
+    "graph": "nx graph",
+    "affected:build": "nx affected -t build",
+    "migrate": "docker compose -f infra/docker/docker-compose.yml --env-file infra/docker/.env run --rm migrate"
+  },
+  "devDependencies": {
+    "@nx/eslint": "20.0.0",
+    "@nx/eslint-plugin": "20.0.0",
+    "@nx/js": "20.0.0",
+    "@nx/next": "20.0.0",
+    "@nxlv/python": "20.0.0",
+    "@nx/workspace": "20.0.0",
+    "eslint": "9.12.0",
+    "nx": "20.0.0",
+    "typescript": "5.6.2"
+  },
+  "nx": {},
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ]
+}

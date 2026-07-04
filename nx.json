@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "npmScope": "saas",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/pnpm-workspace.yaml"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/eslint.config.mjs",
+      "!{projectRoot}/**/*.stories.[jt]s?(x)"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": ["production", "^production"]
+    },
+    "lint": { "cache": true, "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"] },
+    "test": { "cache": true, "inputs": ["default", "^production"] },
+    "typecheck": { "cache": true, "dependsOn": ["^build"] }
+  },
+  "plugins": [
+    { "plugin": "@nxlv/python", "options": { "projectType": "poetry", "packageNameGenerator": "name-based" } },
+    { "plugin": "@nx/next/plugin", "options": { "buildTargetName": "build", "devTargetName": "dev", "serveTargetName": "serve" } },
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } }
+  ],
+  "defaultBase": "main",
+  "nxCloudAccessToken": ""
+}

@@ -1,0 +1,60 @@
+[project]
+name = "saas-backend"
+version = "0.1.0"
+description = "SaaS PM+FinOps Backend API (FastAPI)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.115.0",
+    "uvicorn[standard]==0.30.0",
+    "pydantic==2.9.0",
+    "pydantic-settings==2.3.0",
+    "sqlalchemy==2.0.35",
+    "asyncpg==0.29.0",
+    "alembic==1.13.0",
+    "pydantic-settings==2.3.0",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "python-multipart==0.0.9",
+    "httpx==0.27.0",
+    "redis==5.0.0",
+    "aio-pika==9.4.0",
+    "faststream==0.5.6",
+    "opentelemetry-api==1.28.0",
+    "opentelemetry-sdk==1.28.0",
+    "opentelemetry-exporter-otlp==1.28.0",
+    "opentelemetry-instrumentation-fastapi==0.42b0",
+    "opentelemetry-instrumentation-psycopg==0.42b0",
+    "python-json-logger==2.0.7"
+]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "0.6.0"
+mypy = "1.11.0"
+pytest = "8.3.0"
+pytest-asyncio = "0.23.0"
+pytest-cov = "6.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+select = ["E", "F", "I", "UP", "W", "C4", "N", "D", "S", "B", "A", "C90", "COM", "EXE", "FA", "ISC", "NPY", "PD", "PER", "PIE", "PL", "PT", "PTH", "PYI", "RSE", "RET", "RUF", "SIM", "T10", "T20", "TCH", "TRY"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"

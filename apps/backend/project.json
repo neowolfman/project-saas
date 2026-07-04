@@ -1,0 +1,11 @@
+{
+  "name": "backend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend",
+  "projectType": "application",
+  "targets": {
+    "lint": { "executor": "@nx/eslint:lint" },
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "python -m ruff check . && python -m mypy ." } }
+  },
+  "tags": ["type:app", "scope:backend", "type:app-backend"]
+}

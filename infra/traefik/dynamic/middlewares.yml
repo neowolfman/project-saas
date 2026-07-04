@@ -1,0 +1,78 @@
+# Dynamic Traefik middlewares — reusable across routers via labels.
+# https://doc.traefik.io/traefik/middlewares/overview/
+
+http:
+  middlewares:
+    security-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customFrameOptionsValue: "SAMEORIGIN"
+        referrerPolicy: "strict-origin-when-cross-origin"
+        permissionsPolicy: "camera=(), geolocation=(), microphone=()"
+
+    ratelimit-general:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: "1s"
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    ratelimit-auth:
+      rateLimit:
+        average: 5
+        burst: 3
+        period: "1m"
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    compress:
+      compress:
+        excludedContentTypes:
+          - "text/event-stream"
+
+    retry:
+      retry:
+        attempts: 3
+        initialInterval: "100ms"
+
+    circuit-breaker:
+      circuitBreaker:
+        expression: "ResponseCodeRatio(500, 600, 0, 600) > 0.25"
+        checkPeriod: "30s"
+        fallbackDuration: "30s"
+        recoveryDuration: "10s"
+
+    cors-default:
+      headers:
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "PATCH"
+          - "DELETE"
+          - "OPTIONS"
+        accessControlAllowOriginList:
+          - "http://localhost:3000"
+          - "http://localhost:3001"
+        accessControlMaxAge: 100
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+          - "X-Tenant-ID"
+          - "X-Request-ID"
+        accessControlAllowCredentials: true
+        addVaryHeader: true
+
+    strip-prefix-api:
+      stripPrefix:
+        prefixes:
+          - "/api"
+        forceSlash: false

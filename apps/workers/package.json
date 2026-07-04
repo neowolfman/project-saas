@@ -1,0 +1,24 @@
+{
+  "name": "@saas/workers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "faststream run apps.workers.runner:app --reload",
+    "start": "faststream run apps.workers.runner:app"
+  },
+  "dependencies": {
+    "faststream": "0.5.6",
+    "pydantic": "2.9.0",
+    "pydantic-settings": "2.3.0",
+    "aio-pika": "9.4.0",
+    "psycopg": "3.1.0",
+    "redis": "5.0.0",
+    "httpx": "0.27.0"
+  },
+  "devDependencies": {
+    "ruff": "0.6.0",
+    "pytest": "8.3.0",
+    "pytest-asyncio": "0.23.0"
+  }
+}
