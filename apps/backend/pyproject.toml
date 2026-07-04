@@ -43,7 +43,11 @@ build-backend = "poetry.core.masonry.api"
 target-version = "py312"
 line-length = 120
 select = ["E", "F", "I", "UP", "W", "C4", "N", "D", "S", "B", "A", "C90", "COM", "EXE", "FA", "ISC", "NPY", "PD", "PERF", "PIE", "PL", "PT", "PTH", "PYI", "RSE", "RET", "RUF", "SIM", "T10", "T20", "TCH", "TRY"]
-ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107"]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D107", "B008", "COM812"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "PLR2004", "D", "E501", "SIM117", "TRY", "PT004", "S105"]
+"migrations/**/*.py" = ["D", "E501", "PLR0915"]
 
 [tool.mypy]
 python_version = "3.12"

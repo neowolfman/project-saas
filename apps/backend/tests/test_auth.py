@@ -1,11 +1,11 @@
-import asyncio
-import pytest
-from httpx import AsyncClient, ASGITransport
 from uuid import uuid4
-from sqlalchemy import text
-from apps.backend.src.main import app
+
+import pytest
 from apps.backend.src.database import api_session_factory
+from apps.backend.src.main import app
 from db_clients.session import _engines_registry, tenant_context
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 
 BASE_URL = "http://testserver"
 
@@ -35,17 +35,17 @@ async def test_auth_onboarding_and_login_flow():
             "tier": "starter",
             "email": email,
             "password": password,
-            "full_name": "Administrador Test"
+            "full_name": "Administrador Test",
         }
-        
+
         response = await ac.post("/auth/register", json=reg_payload)
         assert response.status_code == 201
-        
+
         data = response.json()
         assert "access_token" in data
         assert data["user"]["email"] == email
         assert data["user"]["role"] == "Tenant Admin"
-        
+
         tenant_id = data["user"]["tenant_id"]
         user_id = data["user"]["user_id"]
 
@@ -58,7 +58,7 @@ async def test_auth_onboarding_and_login_flow():
         login_payload = {
             "email": email,
             "password": password,
-            "slug": slug
+            "slug": slug,
         }
         response_login = await ac.post("/auth/login", json=login_payload)
         assert response_login.status_code == 200
@@ -69,7 +69,7 @@ async def test_auth_onboarding_and_login_flow():
         login_payload_wrong = {
             "email": email,
             "password": "wrongPassword",
-            "slug": slug
+            "slug": slug,
         }
         response_wrong = await ac.post("/auth/login", json=login_payload_wrong)
         assert response_wrong.status_code == 401
@@ -91,7 +91,7 @@ async def test_tenant_context_middleware_and_rls():
     """Valida que el middleware resuelva el tenant de las peticiones HTTP y aplique RLS."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url=BASE_URL) as ac:
-        
+
         # 1. Acceso sin Tenant (Fail-Closed) en ruta protegida
         resp_no_tenant = await ac.get("/projects/test")
         assert resp_no_tenant.status_code == 400
@@ -100,14 +100,14 @@ async def test_tenant_context_middleware_and_rls():
         # 2. Crear dos tenants temporales directamente en base de datos
         t1_id = uuid4()
         t2_id = uuid4()
-        
+
         async with api_session_factory() as session:
             await session.execute(
                 text("INSERT INTO tenants (tenant_id, slug, name, tier) VALUES (:id, :slug, :name, 'starter')"),
                 [
                     {"id": t1_id, "slug": "tenant-1", "name": "Tenant 1"},
-                    {"id": t2_id, "slug": "tenant-2", "name": "Tenant 2"}
-                ]
+                    {"id": t2_id, "slug": "tenant-2", "name": "Tenant 2"},
+                ],
             )
             await session.commit()
 
@@ -116,7 +116,7 @@ async def test_tenant_context_middleware_and_rls():
             async with api_session_factory() as session:
                 await session.execute(
                     text("INSERT INTO projects (tenant_id, name, status) VALUES (:tenant_id, 'Proyecto Tenant 1', 'active')"),
-                    {"tenant_id": t1_id}
+                    {"tenant_id": t1_id},
                 )
                 await session.commit()
 
@@ -124,7 +124,7 @@ async def test_tenant_context_middleware_and_rls():
             async with api_session_factory() as session:
                 await session.execute(
                     text("INSERT INTO projects (tenant_id, name, status) VALUES (:tenant_id, 'Proyecto Tenant 2', 'active')"),
-                    {"tenant_id": t2_id}
+                    {"tenant_id": t2_id},
                 )
                 await session.commit()
 

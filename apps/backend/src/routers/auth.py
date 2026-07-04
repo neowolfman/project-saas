@@ -99,7 +99,13 @@ async def register(body: RegisterRequest) -> Any:
                 "password_hash": pass_hash,
             },
         )
-        user_id = user_result.fetchone()[0]
+        user_row = user_result.fetchone()
+        if not user_row:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error al recuperar el ID del usuario registrado.",
+            )
+        user_id = user_row[0]
 
         # Buscar role_id de 'Tenant Admin'
         role_result = await session.execute(
@@ -174,6 +180,12 @@ async def login(request: Request, body: LoginRequest) -> Any:
                     detail=f"Tenant con slug '{body.slug}' no encontrado.",
                 )
             tenant_id = row[0]
+
+    if not tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se pudo resolver el inquilino (tenant).",
+        )
 
     # 2. Consultar y verificar el usuario bajo el contexto aislado del tenant
     async with tenant_context(tenant_id), api_session_factory() as session:

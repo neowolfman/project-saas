@@ -1,6 +1,6 @@
 from apps.backend.src.database import api_session_factory
 from apps.backend.src.middleware.tenant import TenantContextMiddleware
-from apps.backend.src.routers import auth
+from apps.backend.src.routers import auth, projects, tasks
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -23,22 +23,7 @@ app.add_middleware(
 # Registrar el middleware de aislamiento por Tenant (RLS)
 app.add_middleware(TenantContextMiddleware)
 
-# Registrar Routers
-app.include_router(auth.router)
-
-
-@app.get("/health")
-async def health_check() -> dict[str, str]:
-    """Chequeo básico de salud del servicio backend y la base de datos."""
-    try:
-        async with api_session_factory() as session:
-            await session.execute(text("SELECT 1"))
-    except Exception as e:
-        return {"status": "unhealthy", "database": "disconnected", "detail": str(e)}
-    else:
-        return {"status": "healthy", "database": "connected"}
-
-
+# Registrar ruta de test de RLS antes del router de proyectos para evitar conflictos de ruteo
 @app.get("/projects/test")
 async def test_rls_projects() -> list[dict[str, str]]:
     """Ruta de prueba protegida por RLS.
@@ -58,3 +43,21 @@ async def test_rls_projects() -> list[dict[str, str]]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error consultando proyectos: {e}",
         ) from e
+
+
+# Registrar Routers
+app.include_router(auth.router)
+app.include_router(projects.router)
+app.include_router(tasks.router)
+
+
+@app.get("/health")
+async def health_check() -> dict[str, str]:
+    """Chequeo básico de salud del servicio backend y la base de datos."""
+    try:
+        async with api_session_factory() as session:
+            await session.execute(text("SELECT 1"))
+    except Exception as e:
+        return {"status": "unhealthy", "database": "disconnected", "detail": str(e)}
+    else:
+        return {"status": "healthy", "database": "connected"}
