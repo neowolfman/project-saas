@@ -1,0 +1,21 @@
+{
+  "name": "db-clients",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/db-clients",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python -m ruff check libs/db-clients"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python -m mypy libs/db-clients"
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:shared", "type:lib-shared"]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "ddd-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ddd-core",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python -m ruff check libs/ddd-core"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "python -m mypy libs/ddd-core"
+      }
+    }
+  },
+  "tags": ["type:lib", "scope:shared", "type:lib-shared"]
+}

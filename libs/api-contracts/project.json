@@ -6,6 +6,9 @@
   "tags": ["type:lib", "scope:shared", "type:lib-shared"],
   "targets": {
     "lint": { "executor": "@nx/eslint:lint" },
-    "typecheck": { "executor": "nx:run-commands", "options": { "command": "tsc --noEmit -p tsconfig.json" } }
+    "typecheck": { "executor": "nx:run-commands", "options": { "command": "tsc --noEmit -p tsconfig.json" } },
+    "gen-ts": { "executor": "nx:run-commands", "options": { "command": "tsx tools/codegen-openapi.ts" } },
+    "gen-py": { "executor": "nx:run-commands", "options": { "command": "tsx tools/codegen-asyncapi.ts" } },
+    "verify": { "executor": "nx:run-commands", "options": { "command": "nx run-many -t gen-ts gen-py && git diff --exit-code libs/api-contracts/gen" } }
   }
 }

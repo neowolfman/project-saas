@@ -179,6 +179,24 @@ services:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
 
+  dev-runner:
+    build:
+      context: ../../apps/backend
+      dockerfile: Dockerfile
+    user: "root"
+    volumes:
+      - ../../:/app
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-saas}
+      PYTHONPATH: /app:/app/libs/ddd-core:/app/libs/db-clients
+      ENV: development
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["tail -f /dev/null"]
+    networks: [data-net, gateway-net]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+
   opensearch:
     image: opensearchproject/opensearch:2.17.0
     container_name: saas-opensearch
