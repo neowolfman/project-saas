@@ -1,0 +1,96 @@
+# =============================================================================
+# Root .dockerignore — se aplica cuando el build context es el repo root.
+# Excluye todo lo que no es necesario para el build de la imagen Python.
+# =============================================================================
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+
+# ---------- VCS ----------
+.git
+.gitignore
+
+# ---------- Agent tooling ----------
+.agents/
+
+# ---------- Editors ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- Node / Next.js ----------
+node_modules/
+.next/
+out/
+build/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.turbo/
+
+# ---------- Nx ----------
+.nx/cache
+.nx/workspace-data
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+dist/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.tox/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# ---------- Env / secrets ----------
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# ---------- Docker ----------
+*.local
+# Excluir Dockerfiles del contexto de COPY (Docker siempre puede leerlos para el build)
+**/Dockerfile
+**/*.dockerfile
+docker-compose*.yml
+
+# ---------- Logs ----------
+logs/
+*.log
+
+# ---------- Frontend source (no se necesita en la imagen Python) ----------
+apps/app/
+apps/landing/
+
+# ---------- TS libs (no se necesitan en la imagen Python) ----------
+libs/ui-tokens/
+libs/design-system/
+libs/api-contracts/
+
+# ---------- Docs / tools ----------
+docs/
+tools/
+README.md
+Makefile
+skills-lock.json

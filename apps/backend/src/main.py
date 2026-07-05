@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager, suppress
 
 from apps.backend.src.config import settings
@@ -10,6 +11,8 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from faststream.rabbit import RabbitBroker
 from sqlalchemy import text
+
+logger = logging.getLogger("saas.backend")
 
 broker = RabbitBroker(settings.rabbitmq_url)
 
@@ -35,13 +38,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configuración de CORS
+# Configuración de CORS — única fuente de verdad para orígenes permitidos.
+# Traefik NO aplica cors-default en el router del backend para evitar headers duplicados.
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # app (dashboard)
+    "http://localhost:3001",  # landing
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Tenant-ID", "X-Request-ID"],
 )
 
 # Registrar el middleware de aislamiento por Tenant (RLS)
@@ -62,11 +73,12 @@ async def test_rls_projects() -> list[dict[str, str]]:
                 {"project_id": str(row[0]), "name": row[1], "status": row[2]}
                 for row in rows
             ]
-    except Exception as e:
+    except Exception:
+        logger.exception("Error consultando proyectos en ruta de test RLS")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error consultando proyectos: {e}",
-        ) from e
+            detail="Internal server error",
+        )
 
 
 # Registrar Routers
@@ -80,11 +92,18 @@ app.include_router(webhooks.router)
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
-    """Chequeo básico de salud del servicio backend y la base de datos."""
+    """Chequeo de salud del servicio backend y la base de datos.
+
+    Retorna HTTP 503 si la base de datos no responde, para que Docker/Traefik
+    marquen el contenedor como unhealthy y retiran el tráfico.
+    """
     try:
         async with api_session_factory() as session:
             await session.execute(text("SELECT 1"))
-    except Exception as e:
-        return {"status": "unhealthy", "database": "disconnected", "detail": str(e)}
-    else:
-        return {"status": "healthy", "database": "connected"}
+    except Exception:
+        logger.exception("Healthcheck: la base de datos no responde")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="database disconnected",
+        )
+    return {"status": "healthy", "database": "connected"}

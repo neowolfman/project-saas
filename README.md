@@ -2,10 +2,10 @@
 
 > Plataforma **SaaS B2B multi-tenant** de gestión de proyectos de TI con convergencia nativa entre **gestión de proyectos (PM)** y **operaciones financieras (FinOps)**.
 
-[![Status: Architecture Spec](https://img.shields.io/badge/status-architecture%20spec-blue)](docs/architecture/00-Executive-Summary.md)
-[![Backend: FastAPI](https://img.shields.io/badge/backend-FastAPI%20%2B%20Python%203.12-3776AB)](docs/architecture/09-Technology-Stack-Matrix.md)
-[![Frontend: Next.js](https://img.shields.io/badge/frontend-Next.js%20App%20Router-000000)](docs/architecture/08-Frontend-DesignSystem-Landing.md)
-[![Infra: Docker / K8s](https://img.shields.io/badge/infra-Docker%20Compose%20%E2%86%92%20Kubernetes-326CE5)](docs/architecture/10-Infrastructure-Docker-K8s.md)
+[![Status: In Development](https://img.shields.io/badge/status-in%20development-orange)](docs/architecture/00-Executive-Summary.md)
+[![Backend: FastAPI](https://img.shields.io/badge/backend-FastAPI%20%2B%20Python%203.12-3776AB)](apps/backend/)
+[![Frontend: Next.js](https://img.shields.io/badge/frontend-Next.js%20App%20Router-000000)](apps/landing/)
+[![Infra: Docker Compose](https://img.shields.io/badge/infra-Docker%20Compose-326CE5)](infra/docker/)
 [![Language: Español](https://img.shields.io/badge/docs-espa%C3%B1ol-yellow)](docs/architecture/README.md)
 
 ---
@@ -14,7 +14,18 @@
 
 Una plataforma donde **cada hora trabajada es un evento financiero de primera clase**. El motor FinOps convierte la evidencia del trabajo (timers, entradas manuales y *commits* de Git) en **costo, margen y riesgo de SLA en tiempo real**, integrando de forma nativa lo que hoy vive fragmentado entre Jira/Asana/ClickUp y una hoja de cálculo.
 
-> **Estado actual:** este repositorio contiene la **documentación de arquitectura (SAD)** de referencia. El código es ilustrativo dentro del SAD; aún **no hay una implementación ejecutable**. Es la base técnica para que el equipo de ingeniería construya el producto.
+## 📦 Estado de implementación
+
+| Componente | Estado | Descripción |
+|---|---|---|
+| **Backend API (FastAPI)** | ✅ Funcional | 6 routers: auth (register/login + onboarding), projects, tasks, time_logs, financial_contracts, webhooks (GitHub/GitLab). Outbox relay → RabbitMQ. RLS middleware. JWT. |
+| **Workers (FastStream)** | ✅ Funcional | `git_consumer` (parsea `Resolves #N [Time: Xh]`), `margin_consumer` (idempotente). DLX + colas prioritarias. |
+| **Libs Python** | ✅ Funcional | `ddd-core` (DomainEvent, AggregateRoot, OutboxEvent), `db-clients` (session factory, RLS listener), `security-utils` (jwt, bcrypt, hmac) |
+| **Libs TypeScript** | ✅ Parcial | `ui-tokens` (tokens.css/json), `design-system` (TIERS CLP), `api-contracts` (interfaces) |
+| **Frontend (Next.js)** | 🚧 Pendiente | `apps/app` y `apps/landing` son marcadores de paquete — pendiente bootstrap con App Router |
+| **Base de datos** | ✅ Funcional | Migración 0001: 15 tablas, RLS (FORCE), 2 hypertables TimescaleDB, 2 continuous aggregates, audit ledger hash-chainado |
+| **Infraestructura** | ✅ Funcional | Docker Compose: PostgreSQL/TimescaleDB, Valkey, RabbitMQ, MinIO (WORM), OpenSearch, Traefik, migrate service |
+| **Documentación (SAD)** | ✅ Completa | 17 docs modulares + 14 ADRs + 3 diagramas (C4 + ERD) |
 
 ## 🏛️ Los tres pilares
 
@@ -24,52 +35,68 @@ Una plataforma donde **cada hora trabajada es un evento financiero de primera cl
 | **Aislamiento enterprise híbrido** | *Schema* compartido con `tenant_id` (Starter/Growth) + **base de datos dedicada** (Enterprise/VIP), con recursos VIP físicamente aislados en K8s. |
 | **Zero-friction para devs** | Registro de horas vía *webhooks* de Git (`Resolves #102 [Time: 2h]`) y onboarding de tenant en caliente, sin abrir la UI. |
 
-## 🧱 Stack tecnológico (resumen)
+## 🧱 Stack tecnológico
 
 | Capa | Tecnología |
 |---|---|
 | **Backend** | FastAPI · Python 3.12 · Pydantic v2 · SQLAlchemy 2.0 async + asyncpg · Alembic |
 | **Mensajería** | RabbitMQ (DLX, colas prioritarias) · FastStream (AsyncAPI) |
 | **Datos** | PostgreSQL 16 · TimescaleDB · Redis/Valkey · OpenSearch · MinIO |
-| **Frontend** | Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · Framer Motion · TanStack Query · Zustand |
+| **Frontend** | Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · TanStack Query · Zustand |
 | **Observabilidad** | OpenTelemetry → Prometheus + Loki + Tempo + Grafana |
 | **Billing** | OpenMeter (metering) + Stripe Billing |
 | **Infra** | Docker Compose → Kubernetes · Traefik · Vault |
-| **Tooling** | Monorepo Nx + `@nxlv/python` con codegen de contratos OpenAPI/AsyncAPI |
+| **Tooling** | Monorepo Nx + `@nxlv/python` |
 
-👉 Justificación completa y alternativas descartadas en [`docs/architecture/09-Technology-Stack-Matrix.md`](docs/architecture/09-Technology-Stack-Matrix.md).
+## 🚀 Arranque rápido
+
+### Prerrequisitos
+- Docker + Docker Compose v2
+- Node.js 20 LTS + pnpm 9
+- Python 3.12
+
+### Levantar infraestructura
+
+```bash
+# Configurar secrets (fail-closed: el stack no arranca sin ellos)
+cp infra/docker/.env.example infra/docker/.env
+# Editar infra/docker/.env con contraseñas reales
+
+# Validar y levantar
+make validate        # valida docker-compose.yml
+make infra-build     # construye imágenes (migrate)
+make infra-up        # levanta todos los servicios + ejecuta migraciones
+make infra-status    # verificar que todo está healthy
+```
+
+### Servicios disponibles
+
+| Servicio | URL local | Credenciales |
+|---|---|---|
+| Traefik Dashboard | http://localhost:8080 | (sin auth, dev only) |
+| RabbitMQ Management | http://rabbitmq.saas.local | ver `infra/docker/.env` |
+| MinIO Console | http://minio.saas.local | ver `infra/docker/.env` |
+| OpenSearch | http://localhost:9200 | (security plugin desactivado en dev) |
+| PostgreSQL | localhost:5432 | user `app` / ver `.env` |
+| Backend API | http://localhost:8000 (próximamente) | — |
+
+### Comandos útiles
+
+```bash
+make help           # lista todos los targets disponibles
+make psql           # shell psql directo a la base de datos
+make redis-cli      # shell redis-cli
+make migrate        # re-ejecutar migraciones
+make infra-logs     # tail de logs
+make infra-down     # detener servicios
+make clean          # detener + limpiar contenedores (preserva volúmenes)
+```
 
 ## 📚 Documentación de arquitectura (SAD)
 
 El SAD es **modular**: un archivo por dominio + índice + apéndice de ADRs + diagramas, redactado en **español técnico** (código/identificadores en inglés).
 
-**Punto de entrada recomendado:** [`docs/architecture/README.md`](docs/architecture/README.md) — índice, glosario y mapa bidireccional especificación ↔ archivo.
-
-```mermaid
-flowchart LR
-    A["PM + FinOps convergentes<br/>(ES en ledgers)"] --> D["Stack: FastAPI + Next.js<br/>RabbitMQ + TimescaleDB<br/>Nx monorepo"]
-    B["Aislamiento enterprise híbrido<br/>(shared schema + DB dedicada)"] --> D
-    C["Zero-friction dev<br/>(webhooks Git, onboarding)"] --> D
-    D --> E["Operación: Docker Compose → Kubernetes<br/>500+ tenants, recursos VIP dedicados"]
-    E --> F["FinOps de plataforma:<br/>cost attribution por tenant"]
-```
-
-### Estructura del repositorio
-
-```
-project-saas/
-├── README.md                         ← este archivo (portada del repo)
-├── .gitignore
-└── docs/
-    └── architecture/                 ← SAD modular
-        ├── README.md                 índice + glosario + mapa spec↔archivo
-        ├── 00-Executive-Summary.md … 16-Roadmap-FinOps-Risks.md
-        ├── ADR-Records.md            14 ADRs (Nygard, ADR-0001…ADR-0014)
-        └── diagrams/
-            ├── c4-context.mmd        C4 Nivel 1 (Contexto)
-            ├── c4-container.mmd      C4 Nivel 2 (Contenedores)
-            └── erd-core.mmd          ERD del dominio core
-```
+**Punto de entrada:** [`docs/architecture/README.md`](docs/architecture/README.md)
 
 ### Lectura rápida por interés
 
@@ -84,22 +111,18 @@ project-saas/
 | Billing, metering y tiers | [`14-Billing-Metering-Tiers.md`](docs/architecture/14-Billing-Metering-Tiers.md) |
 | Las decisiones (ADRs) | [`ADR-Records.md`](docs/architecture/ADR-Records.md) |
 
-## 🔐 Seguridad y privacidad
-
-La arquitectura contempla RBAC/ABAC con 9 roles, *audit ledger* inmutable (hash chaining + export WORM a MinIO), cifrado TLS 1.3 / AES-256, rate-limiting por tier y un *pipeline* DevSecOps (SAST, DAST, SCA, escaneo de imágenes). Detalle en [`13-Security-DevSecOps.md`](docs/architecture/13-Security-DevSecOps.md) y [`03-Identity-Security-RBAC.md`](docs/architecture/03-Identity-Security-RBAC.md).
-
 ## 🗺️ Roadmap
 
-1. **MVP** — landing + *core* PM en Docker Compose.
+1. **MVP** — ✅ Backend + infraestructura en Docker Compose. 🚧 Frontend Next.js pendiente.
 2. **Multi-tenant estable + metering** (Starter/Enterprise).
 3. **Enterprise + VIP en K8s** — recursos dedicados, analítica predictiva de SLA.
 4. **HA multi-región** — activa-pasiva, DR probado, RTO/RPO objetivos.
 
-Detalle y FinOps de plataforma en [`16-Roadmap-FinOps-Risks.md`](docs/architecture/16-Roadmap-FinOps-Risks.md).
+Detalle en [`16-Roadmap-FinOps-Risks.md`](docs/architecture/16-Roadmap-FinOps-Risks.md).
 
 ## 📄 Licencia
 
-Por definir. Mientras tanto, todos los derechos reservados. Este repositorio contiene documentación de arquitectura con decisiones de negocio y estrategia; el uso o reproducción requiere autorización expresa.
+Por definir. Mientras tanto, todos los derechos reservados.
 
 ---
 

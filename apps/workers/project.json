@@ -1,11 +1,25 @@
 {
   "name": "workers",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/workers",
-  "projectType": "library",
+  "sourceRoot": "apps/workers/src",
+  "projectType": "application",
   "targets": {
-    "lint": { "executor": "@nx/eslint:lint" },
-    "typecheck": { "executor": "nx:run-commands", "options": { "command": "python -m ruff check ." } }
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": { "command": "python -m ruff check apps/workers/src" }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "python -m mypy apps/workers/src" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "cd apps/workers && python -m pytest" }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": { "command": "faststream run apps.workers.src.runner:app --reload" }
+    }
   },
-  "tags": ["type:lib", "scope:backend", "type:lib-domain"]
+  "tags": ["type:app", "scope:backend", "type:app-workers"]
 }
