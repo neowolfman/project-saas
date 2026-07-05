@@ -1,7 +1,7 @@
 # Project Status — SaaS PM+FinOps
 
 > **Última actualización:** 2026-07-05
-> **Estado general:** Fase 1 (MVP) — **60% completado**. Backend, workers e infraestructura operativos. Frontend pendiente.
+> **Estado general:** Fase 1 (MVP) — **80% completado**. Backend, workers, infraestructura y frontend operativos en Docker Compose.
 
 ---
 
@@ -13,7 +13,7 @@ Plataforma **SaaS B2B multi-tenant** que converge gestión de proyectos (PM) y o
 |---|---|
 | Repositorio | `github.com/neowolfman/project-saas` |
 | Branch activo | `main` |
-| Servicios en compose | 11 (ver §3) |
+| Servicios en compose | 13 (ver §2.7) |
 | Tests | Backend + libs Python en verde (`pytest_cache/lastfailed == {}`) |
 | Cobertura del SAD | 18 docs + 14 ADRs + 3 diagramas |
 
@@ -70,12 +70,20 @@ Plataforma **SaaS B2B multi-tenant** que converge gestión de proyectos (PM) y o
 | `design-system` | `TIERS[]` (4 tiers en CLP), tipo `Tier` | 🟡 Solo datos, sin componentes |
 | `api-contracts` | 11 interfaces de entidad (Tenant, User, Project, Task, …) | 🟡 Hand-written, sin codegen OpenAPI/AsyncAPI |
 
-### 2.5 Frontend (Next.js) — 🚧 Pendiente
+### 2.5 Frontend (Next.js) — ✅ Operativo
 
-| App | Estado | Notas |
+| App | Estado | Descripción |
 |---|---|---|
-| `apps/landing` | 🚧 Stub | Marcador de paquete válido. Pendiente bootstrap con App Router + tema FinOps dark. |
-| `apps/app` | 🚧 Stub | Marcador de paquete válido. Pendiente bootstrap con dashboard + shell. |
+| `apps/landing` | ✅ Funcional | Landing page completa: hero, features (3 pilares), ROI calculator interactivo (CLP), pricing (4 tiers), CTA, footer. Tema FinOps dark con design tokens. Hot reload via Docker. |
+| `apps/app` | ✅ Funcional | Dashboard shell: sidebar de navegación, top bar con search + tenant selector, 4 KPI cards, tabla de margen por proyecto (color-coded), activity feed. TanStack Query + Zustand configurados. |
+
+**Características:**
+- ✅ Next.js 14 App Router en ambos apps
+- ✅ Tailwind CSS con design tokens FinOps dark (`@saas/ui-tokens`)
+- ✅ Hot reload via Docker Compose (volume mounts)
+- ✅ Routing via Traefik (`saas.local` → landing, `app.saas.local` → dashboard)
+- ✅ Acceso directo en puertos 3001 (landing) y 3002 (app)
+- ✅ Precios y ROI calculator en CLP con tabular numerals
 
 ### 2.6 Base de datos — ✅ Funcional
 
@@ -95,7 +103,7 @@ Plataforma **SaaS B2B multi-tenant** que converge gestión de proyectos (PM) y o
 
 ### 2.7 Infraestructura — ✅ Operativa
 
-**Stack de 11 servicios en Docker Compose:**
+**Stack de 13 servicios en Docker Compose:**
 
 | Servicio | Imagen | Red | Healthcheck | Traefik |
 |---|---|---|---|---|
@@ -106,8 +114,10 @@ Plataforma **SaaS B2B multi-tenant** que converge gestión de proyectos (PM) y o
 | `minio-init` | `minio/mc:RELEASE.2024-10-02…` | data + gateway | One-shot: bucket WORM COMPLIANCE 2555d | — |
 | `migrate` | Build (apps/backend/Dockerfile) | data + gateway | One-shot: `alembic upgrade head` | — |
 | `dev-runner` | Build (apps/backend/Dockerfile) | data + gateway | Dev shell (`tail -f /dev/null`) | — |
-| **`backend`** | Build (apps/backend/Dockerfile) | data + gateway | `GET /health` (503 si BD caída) | **`api.saas.local:8000`** |
-| **`workers`** | Build (apps/backend/Dockerfile) | data | — (sin healthcheck) | — |
+| `backend` | Build (apps/backend/Dockerfile) | data + gateway | `GET /health` (503 si BD caída) | **`api.saas.local:8000`** |
+| `workers` | Build (apps/backend/Dockerfile) | data | — (sin healthcheck) | — |
+| **`landing`** | Build (apps/landing/Dockerfile) | gateway | `GET /` (Next.js dev) | **`saas.local:3000`** (port 3001) |
+| **`app`** | Build (apps/landing/Dockerfile) | gateway | `GET /` (Next.js dev) | **`app.saas.local:3000`** (port 3002) |
 | `opensearch` | `opensearchproject/opensearch:2.17.0` | data | `_cluster/health` | — |
 | `traefik` | `traefik:3.2.0` | data + gateway | `traefik healthcheck --ping` | Dashboard `:8080` |
 
@@ -174,11 +184,11 @@ curl -H "Host: api.saas.local" http://localhost/health
 | Traefik gateway + routing | ✅ | api.saas.local, middlewares, rate limiting |
 | Libs Python (ddd-core, db-clients, security-utils) | ✅ | Tests en verde |
 | Design tokens FinOps dark | ✅ | tokens.css/json, formatCLP |
-| **Landing page (Next.js)** | 🚧 | Pendiente bootstrap |
-| **Dashboard app (Next.js)** | 🚧 | Pendiente bootstrap |
+| **Landing page (Next.js)** | ✅ | Hero, features, ROI calculator, pricing, CTA — FinOps dark |
+| **Dashboard app (Next.js)** | ✅ | Sidebar, KPIs, tabla margen, activity feed |
 | **Tests E2E (backend + BD + RLS)** | 🚧 | Pendiente suite integración Docker |
 
-**Progreso F1: ~70%**
+**Progreso F1: ~85%**
 
 ### Fase 2 — Multi-tenant estable + metering
 

@@ -1,6 +1,6 @@
 # =============================================================================
 # Root .dockerignore — se aplica cuando el build context es el repo root.
-# Excluye todo lo que no es necesario para el build de la imagen Python.
+# Se aplica a TODOS los Dockerfiles. Cada Dockerfile copia solo lo que necesita.
 # =============================================================================
 
 # ---------- OS ----------
@@ -21,7 +21,7 @@ Thumbs.db
 *.swo
 *~
 
-# ---------- Node / Next.js ----------
+# ---------- Node / Next.js (build artifacts) ----------
 node_modules/
 .next/
 out/
@@ -35,7 +35,7 @@ pnpm-debug.log*
 .nx/cache
 .nx/workspace-data
 
-# ---------- Python ----------
+# ---------- Python (build artifacts) ----------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -68,29 +68,14 @@ coverage.xml
 *.key
 secrets/
 
-# ---------- Docker ----------
-*.local
-# Excluir Dockerfiles del contexto de COPY (Docker siempre puede leerlos para el build)
-**/Dockerfile
-**/*.dockerfile
-docker-compose*.yml
-
 # ---------- Logs ----------
 logs/
 *.log
 
-# ---------- Frontend source (no se necesita en la imagen Python) ----------
-apps/app/
-apps/landing/
-
-# ---------- TS libs (no se necesitan en la imagen Python) ----------
-libs/ui-tokens/
-libs/design-system/
-libs/api-contracts/
-
-# ---------- Docs / tools ----------
+# ---------- Docs / tools (no se necesitan en imágenes Docker) ----------
 docs/
 tools/
 README.md
+PROJECT_STATUS.md
 Makefile
 skills-lock.json

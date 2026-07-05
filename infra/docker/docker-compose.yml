@@ -20,6 +20,8 @@ volumes:
   minio-data:
   opensearch-data:
   traefik-certs:
+  landing-next:
+  app-next:
 
 services:
 
@@ -284,6 +286,78 @@ services:
         limits: { cpus: "0.5", memory: 384M }
         reservations: { cpus: "0.1", memory: 64M }
 
+
+  landing:
+    build:
+      context: ../..
+      dockerfile: apps/landing/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - landing-next:/app/apps/landing/.next
+    environment:
+      NEXT_PUBLIC_API_URL: http://api.saas.local
+      NODE_ENV: development
+    command: ["pnpm", "--filter", "@saas/landing", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
+    ports:
+      - "3001:3000"
+    networks: [gateway-net]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=gateway-net"
+      - "traefik.http.routers.landing.rule=Host(`saas.local`)"
+      - "traefik.http.routers.landing.entrypoints=web"
+      - "traefik.http.services.landing.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ >/dev/null 2>&1 || curl -sf http://localhost:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M }
+        reservations: { cpus: "0.25", memory: 128M }
+
+  app:
+    build:
+      context: ../..
+      dockerfile: apps/landing/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ../../:/app
+      - /app/node_modules
+      - app-next:/app/apps/app/.next
+    environment:
+      NEXT_PUBLIC_API_URL: http://api.saas.local
+      NODE_ENV: development
+    command: ["pnpm", "--filter", "@saas/app", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
+    ports:
+      - "3002:3000"
+    networks: [gateway-net]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=gateway-net"
+      - "traefik.http.routers.app.rule=Host(`app.saas.local`)"
+      - "traefik.http.routers.app.entrypoints=web"
+      - "traefik.http.services.app.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ >/dev/null 2>&1 || curl -sf http://localhost:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M }
+        reservations: { cpus: "0.25", memory: 128M }
 
   opensearch:
     image: opensearchproject/opensearch:2.17.0

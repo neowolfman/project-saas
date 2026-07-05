@@ -1,5 +1,24 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "outDir": "./dist", "rootDir": "./src", "jsx": "react-jsx" },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "noEmit": true,
+    "incremental": true,
+    "isolatedModules": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/app/*": ["./app/*"],
+      "@saas/ui-tokens": ["../../libs/ui-tokens/src/index.ts"],
+      "@saas/design-system": ["../../libs/design-system/src/index.ts"],
+      "@saas/api-contracts": ["../../libs/api-contracts/src/index.ts"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

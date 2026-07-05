@@ -1,0 +1,47 @@
+@import "@saas/ui-tokens/tokens.css";
+
+:root {
+  --font-sans: Geist, var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", var(--font-inter-mono), ui-monospace,
+    "JetBrains Mono", monospace;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background-color: rgba(45, 212, 191, 0.25);
+    color: var(--fg-primary);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-sunken);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: var(--radius-full);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-600);
+  }
+}
