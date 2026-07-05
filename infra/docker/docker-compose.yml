@@ -301,7 +301,7 @@ services:
       NODE_ENV: development
     command: ["pnpm", "--filter", "@saas/landing", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
     ports:
-      - "3001:3000"
+      - "3010:3000"
     networks: [gateway-net]
     labels:
       - "traefik.enable=true"
@@ -337,7 +337,7 @@ services:
       NODE_ENV: development
     command: ["pnpm", "--filter", "@saas/app", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
     ports:
-      - "3002:3000"
+      - "3011:3000"
     networks: [gateway-net]
     labels:
       - "traefik.enable=true"
@@ -391,7 +391,7 @@ services:
         reservations: { cpus: "0.25", memory: 256M }
 
   traefik:
-    image: traefik:3.2.0
+    image: traefik:3.5.0
     container_name: saas-traefik
     restart: unless-stopped
     command:
@@ -399,29 +399,22 @@ services:
       - "--api.insecure=true"
       - "--ping=true"
       - "--ping.entrypoint=traefik"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=gateway-net"
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.traefik.address=:8080"
-      - "--log.level=DEBUG"
+      - "--log.level=INFO"
       - "--accesslog=true"
       - "--metrics.prometheus=true"
       - "--metrics.prometheus.addEntryPointsLabels=true"
       - "--metrics.prometheus.addServicesLabels=true"
       - "--metrics.prometheus.buckets=0.1,0.2,0.5,1.0,2.0,5.0"
-      - "--certificatesresolvers.letsencrypt.acme.email=admin@saas.local"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
     ports:
-      - "80:80"
+      - "9080:80"
       - "443:443"
       - "8080:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ../traefik/dynamic:/etc/traefik/dynamic:ro
       - traefik-certs:/letsencrypt
     networks: [data-net, gateway-net]

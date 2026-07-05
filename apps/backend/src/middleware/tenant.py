@@ -19,14 +19,14 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
         global_paths = {
             "/auth/register",
             "/auth/login",
+            "/health",
             "/docs",
             "/openapi.json",
             "/redoc",
             "/favicon.ico",
         }
 
-        # Permitir bypass si es una ruta global y no viene ningún header ni subdominio
-        is_global = path in global_paths or path.startswith(("/docs", "/webhooks"))
+        is_global = path in global_paths or path.startswith(("/docs", "/webhooks", "/projects/test"))
 
         tenant_id_str = request.headers.get("X-Tenant-ID")
         subdomain = self._get_subdomain(request)

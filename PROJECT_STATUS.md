@@ -116,10 +116,10 @@ Plataforma **SaaS B2B multi-tenant** que converge gestión de proyectos (PM) y o
 | `dev-runner` | Build (apps/backend/Dockerfile) | data + gateway | Dev shell (`tail -f /dev/null`) | — |
 | `backend` | Build (apps/backend/Dockerfile) | data + gateway | `GET /health` (503 si BD caída) | **`api.saas.local:8000`** |
 | `workers` | Build (apps/backend/Dockerfile) | data | — (sin healthcheck) | — |
-| **`landing`** | Build (apps/landing/Dockerfile) | gateway | `GET /` (Next.js dev) | **`saas.local:3000`** (port 3001) |
-| **`app`** | Build (apps/landing/Dockerfile) | gateway | `GET /` (Next.js dev) | **`app.saas.local:3000`** (port 3002) |
+| **`landing`** | Build (apps/landing/Dockerfile) | gateway | `GET /` (Next.js dev) | **`saas.local`** (port 3010) |
+| **`app`** | Build (apps/landing/Dockerfile) | gateway | `GET /` (Next.js dev) | **`app.saas.local`** (port 3011) |
 | `opensearch` | `opensearchproject/opensearch:2.17.0` | data | `_cluster/health` | — |
-| `traefik` | `traefik:3.2.0` | data + gateway | `traefik healthcheck --ping` | Dashboard `:8080` |
+| `traefik` | `traefik:3.5.0` | data + gateway | `traefik healthcheck --ping` | Dashboard `:8080`, HTTP `:9080` |
 
 **Seguridad del stack:**
 - ✅ Secrets fail-closed (`${VAR:?...}`) — el stack no arranca sin todos los secrets
