@@ -1,6 +1,8 @@
 # 10 — Infraestructura: Docker Compose y Kubernetes
 
 > Especificación original: **§8**. Decisiones: **ADR-0014** (VIP activation en K8s), **ADR-0010** (observabilidad), **ADR-0012** (MinIO). Relacionado: `09` (stack), `12` (observabilidad), `02` (multi-tenancy), `diagrams/c4-container.mmd`.
+>
+> **Nota de implementación (2026-07-05):** El `docker-compose.yml` de referencia en este documento describe el **stack objetivo completo** (21 servicios, incluyendo observabilidad, Vault, OpenMeter, etc.). El archivo **operativo** en `infra/docker/docker-compose.yml` implementa actualmente **11 servicios** (subset de Fase 1). Ver [`PROJECT_STATUS.md`](../../PROJECT_STATUS.md) §2.7 para el inventario exacto. La diferencia principal: el compose operativo omite por ahora los servicios de observabilidad (Prometheus, Loki, Tempo, Grafana, OTel Collector), Vault y OpenMeter — se añadirán en Fase 2.
 
 ## 1. Filosofía de despliegue
 

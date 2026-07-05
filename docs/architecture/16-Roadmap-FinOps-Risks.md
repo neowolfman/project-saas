@@ -1,19 +1,49 @@
 # 16 — Roadmap, FinOps de Plataforma y Riesgos
 
 > Especificación original: **§13**. Relacionado: `10` (infraestructura), `14` (tiers), `01` (ROI), `12` (métricas).
+>
+> **Estado de implementación (2026-07-05):** ver [`PROJECT_STATUS.md`](../../PROJECT_STATUS.md) para el detalle actualizado. Esta sección se mantiene como referencia de arquitectura; los marcadores de progreso (`✅`/`🟡`/`❌`) reflejan el estado real.
 
 ## 1. Roadmap en 4 fases
 
-| Fase | Objetivo | Alcance técnico | Entorno |
-|---|---|---|---|
-| **F1 — MVP** | Validar producto y landing | Landing SSG + ROI calculator + pricing; *core* PM (proyectos/tareas); timer/manual; auth + RBAC básico; FinOps mínimo (margen simple) | Docker Compose |
-| **F2 — Multi-tenant estable + metering** | Cobrar por uso | Multi-tenancy híbrida (Starter/Growth shared, Enterprise schema); Outbox + eventos; webhook Git; metering (OpenMeter) + Stripe para Starter/Enterprise; observabilidad básica | Docker Compose + staging cloud |
-| **F3 — Enterprise + VIP en K8s** | Aislamiento físico y escala | Migración a Kubernetes; **recursos VIP** (DB dedicada, workers exclusivos, Node Affinity, colas prioritarias, retención extendida); analítica predictiva de SLA; HPA por cola | Kubernetes (1 región) |
-| **F4 — HA multi-región** | Resiliencia y SLA 99,99 % | Activa-pasiva multi-AZ/region; PITR y DR probados (game-days); DR RTO/RPO objetivos; *cost attribution* maduro | Kubernetes multi-región |
+| Fase | Objetivo | Alcance técnico | Entorno | Progreso |
+|---|---|---|---|---|
+| **F1 — MVP** | Validar producto y landing | Landing SSG + ROI calculator + pricing; *core* PM (proyectos/tareas); timer/manual; auth + RBAC básico; FinOps mínimo (margen simple) | Docker Compose | **~70%** |
+| **F2 — Multi-tenant estable + metering** | Cobrar por uso | Multi-tenancy híbrida (Starter/Growth shared, Enterprise schema); Outbox + eventos; webhook Git; metering (OpenMeter) + Stripe para Starter/Enterprise; observabilidad básica | Docker Compose + staging cloud | **~10%** |
+| **F3 — Enterprise + VIP en K8s** | Aislamiento físico y escala | Migración a Kubernetes; **recursos VIP** (DB dedicada, workers exclusivos, Node Affinity, colas prioritarias, retención extendida); analítica predictiva de SLA; HPA por cola | Kubernetes (1 región) | **0%** |
+| **F4 — HA multi-región** | Resiliencia y SLA 99,99 % | Activa-pasiva multi-AZ/region; PITR y DR probados (game-days); DR RTO/RPO objetivos; *cost attribution* maduro | Kubernetes multi-región | **0%** |
+
+### F1 — MVP: desglose de progreso
+
+| Item | Estado | Notas |
+|---|---|---|
+| Infraestructura Docker Compose (11 servicios) | ✅ | postgres, redis, rabbitmq, minio, minio-init, migrate, dev-runner, backend, workers, opensearch, traefik |
+| Migración 0001 (schema + RLS + hypertables + caggs) | ✅ | 15 tablas, RLS FORCE, audit hash-chain, grants a `app_api` |
+| Backend API (6 routers + outbox relay + JWT + RBAC) | ✅ | auth, projects, tasks, time_logs, financial_contracts, webhooks |
+| Workers FastStream (git_consumer + margin_consumer) | ✅ | DLX, colas prioritarias, idempotencia |
+| RLS multi-tenant (app + BD, defensa en profundidad) | ✅ | Middleware `TenantContext` + RLS PostgreSQL |
+| Traefik gateway (routing, middlewares, rate limiting) | ✅ | api.saas.local, security-headers, ratelimit |
+| Libs Python (ddd-core, db-clients, security-utils) | ✅ | Tests en verde |
+| Design tokens FinOps dark | ✅ | tokens.css, tokens.json, formatCLP |
+| Landing page (Next.js App Router) | 🚧 | Stub — pendiente bootstrap |
+| Dashboard app (Next.js App Router) | 🚧 | Stub — pendiente bootstrap |
+| Tests E2E en Docker | 🚧 | Pendiente |
+
+### F2 — Multi-tenant + metering: desglose de progreso
+
+| Item | Estado | Notas |
+|---|---|---|
+| Multi-tenancy shared-schema (RLS) | ✅ | Funcional en F1 |
+| Multi-tenancy DB dedicada (Enterprise/VIP) | ❌ | Pendiente |
+| Outbox + eventos al broker | ✅ | Funcional en F1 |
+| Webhook Git (GitHub + GitLab) | ✅ | Funcional en F1 |
+| Metering (OpenMeter) | ❌ | No iniciado |
+| Billing (Stripe) | ❌ | No iniciado |
+| Observabilidad básica (OTel) | ❌ | SDK importado, sin instrumentar |
 
 ### Criterios de salida por fase (extracto)
-- **F1:** conversión de landing medible; timer→margen funcional E2E.
-- **F2:** primer cobro real por metering; suite de aislamiento multi-tenant verde.
+- **F1:** conversión de landing medible; timer→margen funcional E2E. *(backend E2E funcional; landing pendiente)*
+- **F2:** primer cobro real por metering; suite de aislamiento multi-tenant verde. *(aislamiento RLS verde; metering/billing pendiente)*
 - **F3:** tenants VIP con SLA 99,99 %; HPA de workers reacciona a picos de webhook.
 - **F4:** *failover* ejecutado en < RTO objetivo en simulacro.
 

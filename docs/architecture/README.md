@@ -2,7 +2,7 @@
 
 > **Estado:** Versión 1.0 — referencia de arquitectura para el equipo de ingeniería.
 > **Idioma:** redacción técnica en **español**; código, identificadores, YAML, SQL y configuración en **inglés**.
-> **Alcance:** DOCUMENTACIÓN. El código incluido es ilustrativo y de referencia; no constituye un repositorio ejecutable.
+> **Alcance:** Este SAD es la **referencia de arquitectura** del sistema. El repositorio contiene una **implementación parcial en curso** (Fase 1 ~70%): backend FastAPI, workers FastStream, infraestructura Docker Compose y migración inicial están operativos. Ver [`PROJECT_STATUS.md`](../../PROJECT_STATUS.md) para el estado detallado de implementación.
 
 ---
 

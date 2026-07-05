@@ -14,6 +14,8 @@
 
 Una plataforma donde **cada hora trabajada es un evento financiero de primera clase**. El motor FinOps convierte la evidencia del trabajo (timers, entradas manuales y *commits* de Git) en **costo, margen y riesgo de SLA en tiempo real**, integrando de forma nativa lo que hoy vive fragmentado entre Jira/Asana/ClickUp y una hoja de cálculo.
 
+> **Estado del proyecto:** ver [`PROJECT_STATUS.md`](PROJECT_STATUS.md) para el detalle completo de implementación, progreso por fase, deuda técnica y próximos pasos.
+
 ## 📦 Estado de implementación
 
 | Componente | Estado | Descripción |
