@@ -143,10 +143,15 @@ async def test_git_consumer_workflow(seed_test_data):
 @pytest.mark.asyncio
 async def test_margin_consumer_and_idempotency_workflow(seed_test_data):
     """Verifica que el margin consumer actualiza la proyección e implementa idempotencia."""
-    # 1. Crear contrato financiero para el proyecto
+    # 1. Crear proyecto dedicado y contrato financiero
+    p2_id = uuid4()
     contract_id = uuid4()
     async with tenant_context(seed_test_data["t1_id"]), api_session_factory() as session:
         async with session.begin():
+            await session.execute(
+                text("INSERT INTO projects (project_id, tenant_id, name, status) VALUES (:p_id, :t_id, 'Margin Project', 'active')"),
+                {"p_id": p2_id, "t_id": seed_test_data["t1_id"]},
+            )
             await session.execute(
                 text("""
                     INSERT INTO financial_contracts (contract_id, tenant_id, project_id, contract_value, margin_target_pct, sla_terms, window_start, window_end)
@@ -155,7 +160,7 @@ async def test_margin_consumer_and_idempotency_workflow(seed_test_data):
                 {
                     "contract_id": contract_id,
                     "tenant_id": seed_test_data["t1_id"],
-                    "project_id": seed_test_data["p1_id"]
+                    "project_id": p2_id
                 }
             )
 
@@ -164,7 +169,7 @@ async def test_margin_consumer_and_idempotency_workflow(seed_test_data):
         time_logged_payload = {
             "event_id": str(event_id),
             "tenant_id": str(seed_test_data["t1_id"]),
-            "project_id": str(seed_test_data["p1_id"]),
+            "project_id": str(p2_id),
             "amount": 250000.0,
         }
 
@@ -181,7 +186,7 @@ async def test_margin_consumer_and_idempotency_workflow(seed_test_data):
         async with tenant_context(seed_test_data["t1_id"]), api_session_factory() as session:
             res = await session.execute(
                 text("SELECT contract_value, cost_devengado, margin_pct FROM margin_snapshot WHERE project_id = :project_id"),
-                {"project_id": seed_test_data["p1_id"]}
+                {"project_id": p2_id}
             )
             row = res.fetchone()
             assert row is not None
@@ -202,8 +207,9 @@ async def test_margin_consumer_and_idempotency_workflow(seed_test_data):
         async with tenant_context(seed_test_data["t1_id"]), api_session_factory() as session:
             res = await session.execute(
                 text("SELECT cost_devengado FROM margin_snapshot WHERE project_id = :project_id"),
-                {"project_id": seed_test_data["p1_id"]}
+                {"project_id": p2_id}
             )
             row = res.fetchone()
             assert row is not None
             assert float(row[0]) == 250000.0  # Sigue siendo 250k (idempotencia exitosa)
+

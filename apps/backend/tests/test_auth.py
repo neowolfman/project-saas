@@ -10,12 +10,6 @@ from sqlalchemy import text
 BASE_URL = "http://testserver"
 
 
-@pytest.fixture(autouse=True)
-def clear_engines():
-    """Limpia el pool de conexiones de SQLAlchemy antes y después de cada test."""
-    _engines_registry.clear()
-    yield
-    _engines_registry.clear()
 
 
 @pytest.mark.asyncio
