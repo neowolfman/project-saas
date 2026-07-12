@@ -27,6 +27,7 @@ class Settings(BaseSettings):
         return f"amqp://{self.RABBITMQ_USER}:{self.RABBITMQ_PASSWORD}@{self.RABBITMQ_HOST}:{self.RABBITMQ_PORT}/"
 
     ENV: str = "development"
+    LOG_LEVEL: str = "INFO"
 
     @property
     def db_url(self) -> str:

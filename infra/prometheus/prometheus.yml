@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Servicio "backend" en data-net (comunicación inter-contenedor)
+  - job_name: "saas-backend"
+    metrics_path: /metrics/
+    static_configs:
+      - targets: ["backend:8000"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: "backend"
+
+  # Servicio "traefik" en gateway-net (comunicación inter-contenedor)
+  - job_name: "traefik"
+    static_configs:
+      - targets: ["traefik:8080"]
+
+  # Servicio "rabbitmq" en data-net — puerto de métricas Prometheus plugin
+  - job_name: "rabbitmq"
+    static_configs:
+      - targets: ["rabbitmq:15692"]
+
+  # Auto-scrape: Prometheus se raspa a sí mismo (loopback interno del contenedor)
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

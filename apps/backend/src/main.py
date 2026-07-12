@@ -7,11 +7,14 @@ from apps.backend.src.database import api_session_factory
 from apps.backend.src.middleware.tenant import TenantContextMiddleware
 from apps.backend.src.routers import auth, financial_contracts, projects, tasks, time_logs, webhooks
 from apps.backend.src.shared.outbox.relay import run_outbox_relay
+from apps.backend.src.shared.observability import configure_logging, W3CTracingMiddleware, setup_metrics
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from faststream.rabbit import RabbitBroker
 from sqlalchemy import text
 
+# Inicializar logging estructurado JSON al arrancar el módulo
+configure_logging(level=settings.LOG_LEVEL)
 logger = logging.getLogger("saas.backend")
 
 broker = RabbitBroker(settings.rabbitmq_url)
@@ -55,8 +58,14 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Tenant-ID", "X-Request-ID"],
 )
 
+# Registrar el middleware de trazado W3C (debe ir primero para capturar toda la request)
+app.add_middleware(W3CTracingMiddleware)
+
 # Registrar el middleware de aislamiento por Tenant (RLS)
 app.add_middleware(TenantContextMiddleware)
+
+# Montar el endpoint /metrics para Prometheus
+setup_metrics(app)
 
 # Registrar ruta de test de RLS antes del router de proyectos para evitar conflictos de ruteo
 @app.get("/projects/test")

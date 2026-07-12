@@ -25,6 +25,7 @@ opentelemetry-exporter-otlp
 opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-psycopg
 python-json-logger==2.0.7
+prometheus-client==0.20.0
 
 # Development & Testing (Running via Docker Compose)
 ruff==0.6.0

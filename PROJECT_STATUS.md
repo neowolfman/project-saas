@@ -194,13 +194,13 @@ curl -H "Host: api.saas.local" http://localhost/health
 
 | Item | Estado | Notas |
 |---|---|---|
-| Multi-tenancy híbrida (schema + DB dedicada) | 🟡 | Schema compartido funcional; DB dedicada pendiente |
+| Multi-tenancy híbrida (schema + DB dedicada) | ✅ | Completado y verificado (Starter/Enterprise/VIP) |
 | Metering (OpenMeter) | ❌ | No iniciado |
 | Billing (Stripe) | ❌ | No iniciado |
-| Observabilidad básica (OTel → Prom/Loki/Tempo) | ❌ | OTel SDK importado pero no instrumentado |
+| Observabilidad básica (OTel → Prom/Loki/Tempo) | ✅ | W3C tracing, JSON logs, Prometheus /metrics, stack local (Grafana+Loki+Tempo) |
 | Staging cloud | ❌ | No iniciado |
 
-**Progreso F2: ~10%**
+**Progreso F2: ~55%**
 
 ### Fase 3 — Enterprise + VIP en Docker Swarm/Compose
 
