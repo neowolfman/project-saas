@@ -1,7 +1,7 @@
 # Project Status — SaaS PM+FinOps
 
-> **Última actualización:** 2026-07-05
-> **Estado general:** Fase 1 (MVP) — **80% completado**. Backend, workers, infraestructura y frontend operativos en Docker Compose.
+> **Última actualización:** 2026-07-12
+> **Estado general:** Fase 1 (MVP) — **100% completado**. Backend, workers, infraestructura, frontend y suite de pruebas E2E completamente operativos.
 
 ---
 
@@ -186,9 +186,9 @@ curl -H "Host: api.saas.local" http://localhost/health
 | Design tokens FinOps dark | ✅ | tokens.css/json, formatCLP |
 | **Landing page (Next.js)** | ✅ | Hero, features, ROI calculator, pricing, CTA — FinOps dark |
 | **Dashboard app (Next.js)** | ✅ | Sidebar, KPIs, tabla margen, activity feed |
-| **Tests E2E (backend + BD + RLS)** | 🚧 | Pendiente suite integración Docker |
+| **Tests E2E (backend + BD + RLS)** | ✅ | Completados y validados en apps/e2e-tests |
 
-**Progreso F1: ~85%**
+**Progreso F1: 100%**
 
 ### Fase 2 — Multi-tenant estable + metering
 
@@ -202,14 +202,14 @@ curl -H "Host: api.saas.local" http://localhost/health
 
 **Progreso F2: ~10%**
 
-### Fase 3 — Enterprise + VIP en K8s
+### Fase 3 — Enterprise + VIP en Docker Swarm/Compose
 
 | Item | Estado |
 |---|---|
-| Migración a Kubernetes | ❌ |
+| Orquestación y escalado Swarm/Compose | ❌ |
 | Recursos VIP dedicados | ❌ |
 | Analítica predictiva SLA | ❌ |
-| HPA por cola (KEDA) | ❌ |
+| Auto-escalado de workers por cola | ❌ |
 
 **Progreso F3: 0%**
 

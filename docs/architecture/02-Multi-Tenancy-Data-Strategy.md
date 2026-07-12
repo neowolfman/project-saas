@@ -41,7 +41,7 @@ flowchart TB
 
 - **Starter / Growth:** `tenant_id` en cada fila; filtros automáticos a nivel de sesión/repositorio; un único *pool* compartido.
 - **Enterprise:** *schema* aislado dentro de la misma BBDD gestionada (`tenant_acme`, `tenant_globex`); el *pool* enruta por *schema*.
-- **VIP:** BBDD **física dedicada**, *pool* propio, réplicas de lectura y *workers* exclusivos; en K8s, nodos dedicados (ADR-0014).
+- **VIP:** BBDD **física dedicada**, *pool* propio, réplicas de lectura y *workers* exclusivos; en Swarm, nodos dedicados (ADR-0014).
 
 > La elección de destino **no es estática**: el *upgrade* de tier (p. ej. Enterprise→VIP) dispara un *tenant migration job* que mueve datos al nuevo destino sin downtime (ver §6).
 

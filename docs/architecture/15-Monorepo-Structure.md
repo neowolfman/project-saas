@@ -32,8 +32,7 @@ saas-pm-finops/
 │   └── financial-engine/         # dominio: ledger, contract, commands/queries (PY)
 ├── infra/
 │   ├── docker/                   # docker-compose.yml, Dockerfiles
-│   ├── postgres/ rabbitmq/ otel/ prometheus/ promtail/ tempo/
-│   └── k8s/                      # manifests (Deployments, StatefulSets, HPA, affinities)
+│   └── postgres/ rabbitmq/ otel/ prometheus/ promtail/ tempo/
 ├── tools/
 │   ├── codegen-openapi.ts        # genera clientes TS desde OpenAPI
 │   └── codegen-asyncapi.ts       # genera Pydantic desde AsyncAPI

@@ -1,0 +1,24 @@
+[project]
+name = "saas-e2e-tests"
+version = "0.1.0"
+description = "SaaS PM+FinOps End-to-End Integration Tests"
+requires-python = ">=3.12"
+dependencies = [
+    "pytest==8.3.0",
+    "pytest-asyncio==0.23.0",
+    "httpx==0.27.0",
+    "sqlalchemy==2.0.35",
+    "asyncpg==0.29.0"
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"

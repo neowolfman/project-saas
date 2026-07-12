@@ -359,27 +359,29 @@ Auditoría *tamper-evident* para SOC2/GDPR y gestión segura de secretos/claves.
 
 ---
 
-## ADR-0014 — VIP resource activation en Kubernetes (Node Affinity/Taints)
+## ADR-0014 — VIP resource activation en Docker Swarm (Placement Constraints)
 
 **Estado:** Aceptada · **Contexto principal:** `10`, `14`
 
 ### Contexto / Problema
-Garantizar aislamiento físico y rendimiento a tenants VIP (mitigar *noisy neighbor*) cumpliendo SLA 99,99 %, escalando con HPA y con DR probado.
+Garantizar aislamiento físico y rendimiento a tenants VIP (mitigar *noisy neighbor*) cumpliendo SLA 99,99 %, escalando workers según profundidad de cola de RabbitMQ y con DR probado, sin la sobrecarga operativa y complejidad de Kubernetes.
 
 ### Opciones
-1. **Kubernetes con Node Affinity/Taints + recursos dedicados + HPA + PITR/DR.**
-2. Compartir todo y solo *soft limits*.
-3. Despliegues dedicados por VIP fuera de K8s.
+1. **Docker Swarm con Placement Constraints + recursos dedicados + auto-escalado de workers por script/API + PITR/DR.**
+2. Compartir todo y solo *soft limits* en Docker Compose.
+3. Migración a Kubernetes con Node Affinity/Taints y KEDA.
 
 ### Criterios
-- Aislamiento físico (noisy neighbor).
-- Elasticidad (HPA por cola/métricas custom).
+- Aislamiento físico (noisy neighbor) y límites de CPU/memoria.
+- Elasticidad (escalado de workers por profundidad de cola/métricas).
+- Complejidad operativa y uniformidad de stack tecnológico.
 - Operabilidad unificada y DR.
 
 ### Decisión
-**Opción 1.** K8s con afinidad/taints aísla pods VIP en nodos dedicados; StatefulSets para DB dedicada y réplicas; HPA (KEDA) por profundidad de cola; PITR y DR activa-pasiva. Compartir todo viola el SLA VIP; despliegues fuera de K8s fragmentan la operación.
+**Opción 1.** Docker Swarm permite reutilizar la sintaxis de Docker Compose (sección `deploy`) agregando restricciones de placement (`constraints`) para aislar contenedores VIP en nodos físicos dedicados. El escalado de workers se gestiona mediante un script de monitoreo que consulta la profundidad de colas de RabbitMQ y escala los servicios a través de la API de Swarm (`docker service scale`). Esto cumple con las exigencias de aislamiento de los tiers VIP sin la sobrecarga y complejidad operativa de Kubernetes.
 
 ### Consecuencias
 - **(+)** SLA VIP sostenible y noisy neighbor eliminado.
-- **(+)** Escalado automático de workers ante picos (webhooks).
-- **(−)** Complejidad operativa de K8s (Fase 3) y costo de nodos dedicados (justificado por la tarifa VIP y validado por cost attribution, `16`).
+- **(+)** Curva de aprendizaje mínima al mantener la misma base de herramientas de Docker.
+- **(+)** Escalado reactivo de workers ante picos de carga (webhooks).
+- **(−)** La elasticidad en Swarm es menos nativa que en KEDA/K8s y requiere scripts auxiliares de orquestación y monitoreo.

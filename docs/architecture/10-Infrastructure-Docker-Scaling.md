@@ -1,14 +1,14 @@
-# 10 — Infraestructura: Docker Compose y Kubernetes
+# 10 — Infraestructura: Docker Compose, Swarm y Escalado
 
-> Especificación original: **§8**. Decisiones: **ADR-0014** (VIP activation en K8s), **ADR-0010** (observabilidad), **ADR-0012** (MinIO). Relacionado: `09` (stack), `12` (observabilidad), `02` (multi-tenancy), `diagrams/c4-container.mmd`.
+> Especificación original: **§8**. Decisiones: **ADR-0014** (VIP activation en Docker Swarm), **ADR-0010** (observabilidad), **ADR-0012** (MinIO). Relacionado: `09` (stack), `12` (observabilidad), `02` (multi-tenancy), `diagrams/c4-container.mmd`.
 >
 > **Nota de implementación (2026-07-05):** El `docker-compose.yml` de referencia en este documento describe el **stack objetivo completo** (21 servicios, incluyendo observabilidad, Vault, OpenMeter, etc.). El archivo **operativo** en `infra/docker/docker-compose.yml` implementa actualmente **11 servicios** (subset de Fase 1). Ver [`PROJECT_STATUS.md`](../../PROJECT_STATUS.md) §2.7 para el inventario exacto. La diferencia principal: el compose operativo omite por ahora los servicios de observabilidad (Prometheus, Loki, Tempo, Grafana, OTel Collector), Vault y OpenMeter — se añadirán en Fase 2.
 
 ## 1. Filosofía de despliegue
 
 - **Fase 1–2:** operación con **Docker Compose** (entorno reproducible local + primeros clientes).
-- **Fase 3+:** migración a **Kubernetes** para HA, *autoscaling* y **aislamiento físico VIP**.
-- El mismo conjunto de imágenes sirve ambos entornos: solo cambian el *orchestrator* y el nivel de aislamiento.
+- **Fase 3+:** orquestación y escalado con **Docker Swarm / Compose** para HA, replicación y **aislamiento físico VIP**.
+- El mismo conjunto de imágenes sirve todos los entornos: solo varían el archivo de Compose (con sección `deploy`) y la asignación de nodos del clúster Swarm.
 
 ## 2. `docker-compose.yml` (completo)
 
@@ -493,109 +493,88 @@ services:
 - **`minio-init`** crea el bucket WORM `audit-ledger-archive` con retención *COMPLIANCE* 2555d (~7 años) — sustento del audit ledger (`03`).
 - **Vault en modo dev** es referencia para local; en producción se usa HA con almacenamientoConsul/KMS.
 
-## 3. Migración a Kubernetes
+## 3. Escalado y Aislamiento en Producción con Docker (Swarm / Compose)
 
-### Mapeo contenedor → tipo de *workload*
+### Mapeo contenedor → tipo de servicio Swarm
 
-| Servicio Compose | Workload K8s | Motivo |
+| Servicio Compose | Tipo de Servicio Swarm | Motivo |
 |---|---|---|
-| traefik | **Deployment** + **IngressController** / Service `LoadBalancer` | *Edge* sin estado, escalable |
-| landing, app | **Deployment** + HPA | Stateless, escalado horizontal |
-| backend | **Deployment** + HPA | Stateless (sesiones en Redis) |
-| workers | **Deployment** + HPA (métrica custom) | Stateless, escalado por profundidad de cola |
-| postgres-shared, postgres-vip, timescaledb | **StatefulSet** + *headless Service* + PV/SC | Estado persistente, identidad estable, PITR |
-| redis | **StatefulSet** (o operador Valkey) | Persistencia AOF + HA vía *sentinel*/operador |
-| rabbitmq | **StatefulSet** + quorum queues | Quorum necesita identidad estable |
-| minio | **StatefulSet** / Tenant Operator | Erasure-coding, nodos estables |
-| opensearch | **StatefulSet** (o operador OpenSearch) | *Data nodes* con identidad |
-| vault | **StatefulSet** + *Raft* | HA, *sealed* por nodo |
-| otel-collector, promtail | **DaemonSet** (collector/promtail por nodo) + **Deployment** (gateway) | Recolección por nodo |
-| prometheus, loki, tempo, grafana | **StatefulSet** (storage) / Deployment | Stack de obs persistente |
+| traefik | **Replicated** (puertos expuestos) | *Edge* con balanceo, escalable |
+| landing, app | **Replicated** | Sin estado, escalado horizontal |
+| backend | **Replicated** | Sin estado (sesión persistente en Redis) |
+| workers | **Replicated** | Sin estado, escalado según profundidad de cola |
+| postgres-shared, postgres-vip, timescaledb | **Replicated (1 sola réplica)** + Constraints | Con estado. Restringido a un nodo específico con volumen local/SAN persistente |
+| redis | **Replicated (1 sola réplica)** (o Redis Sentinel) | Cache/Store en memoria con persistencia en disco |
+| rabbitmq | **Replicated** (Clúster Swarm de RabbitMQ) | Cola de mensajería tolerante a fallos |
+| minio | **Replicated** / Modo Distribuido | Almacenamiento de objetos S3 WORM |
+| opensearch | **Replicated** (Clúster) | Nodos de datos con almacenamiento persistente |
+| vault | **Replicated** | Servidor de secretos de alta disponibilidad |
+| otel-collector, promtail | **Global** (1 instancia por nodo) | Recolector de telemetría corriendo de forma nativa en cada nodo |
+| prometheus, loki, tempo, grafana | **Replicated** | Stack de telemetría y visualización |
 
-### Manifiestos de referencia (extracto)
+### Manifiestos de referencia (ejemplo de Stack Swarm para VIP)
 ```yaml
-# infra/k8s/vip-affinity.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend-vip-acme
-  labels: {app: backend, tenant: vip-acme, tier: vip}
-spec:
-  replicas: 3
-  selector: {matchLabels: {app: backend, tenant: vip-acme}}
-  template:
-    metadata:
-      labels: {app: backend, tenant: vip-acme, tier: vip}
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: workloadclass
-                    operator: In
-                    values: ["vip"]
-      tolerations:
-        - key: "dedicated"
-          operator: "Equal"
-          value: "vip"
-          effect: "NoSchedule"
-      containers:
-        - name: backend
-          image: saas/backend:latest
-          resources:
-            requests: {cpu: "500m", memory: "512Mi"}
-            limits: {cpu: "2", memory: "1Gi"}
-          env:
-            - name: DATABASE_URL_VIP
-              valueFrom: {secretKeyRef: {name: vip-acme-db, key: dsn}}
----
-# Nodo VIP con taint para aislar pods no-VIP
-apiVersion: v1
-kind: Node
-# (aplicado vía taint administrado / Karpenter nodePool)
-# kubectl taint nodes node-vip-01 dedicated=vip:NoSchedule
-# kubectl label nodes node-vip-01 workloadclass=vip
+# infra/docker/docker-compose.prod-vip.yml
+version: "3.8"
+services:
+  backend-vip-acme:
+    image: saas/backend:latest
+    networks:
+      - data-net
+      - frontend-net
+    deploy:
+      replicas: 3
+      placement:
+        constraints:
+          - node.labels.workloadclass == vip
+          - node.labels.tenant == vip-acme
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1024M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+    environment:
+      DATABASE_URL_VIP: "postgresql+asyncpg://vip-acme-db:5432/vip_acme"
+```
+```bash
+# Comando de aprovisionamiento y aislamiento de nodos en Docker Engine / Swarm
+docker node update --label-add workloadclass=vip node-vip-01
+docker node update --label-add tenant=vip-acme node-vip-01
 ```
 
-## 4. VIP resource activation en K8s (ADR-0014)
+## 4. VIP resource activation en Docker Swarm / Compose (ADR-0014)
 
-| Recurso VIP | Mecanismo K8s |
+| Recurso VIP | Mecanismo Docker Swarm / Compose |
 |---|---|
-| DB aislada | **StatefulSet** propio + PV dedicado + *pool* dedicado (ver `02`) |
-| Réplicas de lectura | *read replica* de PG por tenant VIP; *pool* enrutado a réplica para lecturas |
-| Nodos dedicados | **Node Affinity** (`workloadclass=vip`) + **Taint/NoSchedule** para excluir pods ajenos |
-| *Workers* exclusivos | **Deployment** con *nodeSelector*/afinidad VIP + cola prioritaria (`05`) |
-| Colas prioritarias | `x-max-priority=10` en RabbitMQ + consumidores VIP dedicados |
-| Retención logs extendida | Loki retención por *tenant label* (VIP 7 años); audit ledger WORM MinIO |
+| DB aislada | Contenedor de PostgreSQL exclusivo en red aislada + volumen dedicado (ver `02`) |
+| Réplicas de lectura | Contenedor de lectura de PG configurado como réplica física (async streaming) |
+| Nodos dedicados | **Placement Constraints** (`node.labels.workloadclass == vip`) para aislar contenedores |
+| *Workers* exclusivos | **Services** Swarm independientes escuchando a colas prioritarias específicas (`05`) |
+| Colas prioritarias | `x-max-priority=10` en RabbitMQ + workers VIP dedicados |
+| Retención logs extendida | Recolección de logs por Promtail (filtrado por labels de Docker) y retención en Loki de 7 años |
 
 ### Mitigación de *noisy neighbor*
-- **CPU/memoria:** *requests/limits* estrictos + **LimitRanges/ResourceQuotas** por namespace de tenant VIP.
-- **Red:** ancho de banda y conexiones a BBDD acotados por *pool* dedicado.
-- **Discos IOPS:** PV de clase de alto rendimiento para StatefulSet VIP; *storage class* con IOPS garantizadas.
+- **CPU/memoria:** Limitación explícita mediante `deploy.resources.limits` en Docker Compose/Swarm.
+- **Red:** Redes overlay independientes y aisladas para cada tenant VIP.
+- **Discos IOPS:** Montajes directos sobre volúmenes SSD de alta velocidad en hosts locales restringidos.
 
-## 5. Autoscaling (HPA)
+## 5. Escalado de Servicios (Autoscaling)
 
-- **Backend/landing/app:** HPA por CPU (~70 %) y memoria (~75 %).
-- **Workers:** HPA por **métrica custom** = profundidad de cola RabbitMQ (`rabbitmq_queue_messages` vía Prometheus adapter / KEDA).
+- **Backend/landing/app:** Escalado reactivo controlando el clúster a través del Docker Socket / API de Swarm (`docker service update --replicas=X`) basándose en métricas de Prometheus.
+- **Workers:** Escalado automatizado por **profundidad de cola RabbitMQ** (por ejemplo, mediante un script en bash/python en cron que consulte la API de RabbitMQ y ejecute `docker service scale saas_workers=X` ante picos de webhook).
 
-```yaml
-# infra/k8s/hpa-workers.yaml (KEDA ScaledObject por profundidad de cola)
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata: {name: workers-scaler, namespace: saas}
-spec:
-  scaleTargetRef: {name: workers}
-  minReplicaCount: 2
-  maxReplicaCount: 30
-  triggers:
-    - type: rabbitmq
-      metadata:
-        protocol: auto
-        queueName: fin.time_logged
-        mode: QueueLength
-        value: "500"
-        hostFromEnv: RABBITMQ_URL
+```bash
+# Ejemplo de script de auto-escalado simple basado en RabbitMQ
+QUEUE_LENGTH=$(curl -s -u guest:guest http://rabbitmq:15672/api/queues/%2f/fin.time_logged | jq '.messages')
+if [ "$QUEUE_LENGTH" -gt 500 ]; then
+  docker service scale saas_workers=10
+elif [ "$QUEUE_LENGTH" -lt 50 ]; then
+  docker service scale saas_workers=2
+fi
 ```
 
 ## 6. Backups, PITR y DR

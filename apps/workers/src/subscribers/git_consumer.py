@@ -77,6 +77,16 @@ async def on_git_event(msg: dict[str, Any]) -> None:
             # Ejecutar operaciones en el contexto de base de datos del tenant
             async with tenant_context(tenant_id), api_session_factory() as session:
                 async with session.begin():
+                    # 0. Verificar si el commit ya fue procesado para evitar duplicados
+                    evidence = f"git:commit:{commit_hash}"
+                    dup_res = await session.execute(
+                        text("SELECT 1 FROM time_logs WHERE evidence = :evidence AND tenant_id = :tenant_id LIMIT 1"),
+                        {"evidence": evidence, "tenant_id": tenant_id}
+                    )
+                    if dup_res.fetchone():
+                        logger.info(f"El commit {commit_hash[:8]} ya fue procesado previamente. Saltando.")
+                        continue
+
                     # 1. Resolver el usuario por su email
                     user_res = await session.execute(
                         text("SELECT user_id FROM users WHERE LOWER(email) = LOWER(:email) AND tenant_id = :tenant_id"),

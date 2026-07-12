@@ -4,7 +4,7 @@
 
 Construir una plataforma **SaaS B2B multi-tenant** de gestión de proyectos de TI que sea la primera en su categoría en integrar **de forma nativa** la gestión de proyectos (PM) con las **operaciones financieras (FinOps)**. El objetivo es que cada organización cliente (tenant) conozca, en tiempo real, el **costo real** y el **margen** de cada tarea, contrato y SLA, y que esa información provenga de **evidencia verificable** (commits, PRs, timers) en lugar de planillas manuales.
 
-La plataforma arranca operando con **Docker Compose** (entorno de desarrollo y primeros clientes) y está diseñada desde el primer día para ser **100 % Cloud-Native** y migrar a **Kubernetes**, con capacidad de escalar a **500+ tenants y miles de usuarios concurrentes**, ofreciendo aislamiento de grado *enterprise* para los tenants más exigentes.
+La plataforma opera con **Docker Compose** (entorno de desarrollo y primeros clientes) y está diseñada para escalar mediante **Docker Swarm / Compose** en entornos productivos multi-host, con capacidad de albergar **500+ tenants y miles de usuarios concurrentes**, ofreciendo aislamiento de grado *enterprise* para los tenants más exigentes sin la complejidad de Kubernetes.
 
 ## 2. Los tres pilares
 
@@ -12,7 +12,7 @@ La plataforma arranca operando con **Docker Compose** (entorno de desarrollo y p
 No se trata de "Jira + una planilla de costos". El motor de dominio financiero es de **primera clase**: cada hora registrada (manual, por timer en tiempo real, o automática vía webhook de Git) se convierte inmediatamente en un asiento en el **ledger financiero**, impactando el margen del contrato y la probabilidad de cumplimiento de SLA. La arquitectura aplica **Event Sourcing en los ledgers** (financiero, auditoría, metering) para garantizar trazabilidad e inmutabilidad, mientras el *core* de PM permanece en CRUD ágil. (Ver `04`, `06`, `14`; ADR-0006.)
 
 ### Pilar 2 — Aislamiento *enterprise* híbrido
-Una sola plataforma atiende desde un *startup* en tier **Starter** hasta una empresa regulada en tier **VIP**, sin cambiar de producto. La estrategia de multi-tenancy es **híbrida** (ADR-0005): *schema* compartido con discriminador `tenant_id` para Starter/Growth, y **base de datos física dedicada** para Enterprise/VIP. En Kubernetes, los tenants VIP reciben **recursos dedicados**: nodos aislados por *Node Affinity/Taint*, *workers* exclusivos, réplicas de lectura, colas prioritarias y retención de logs extendida (ADR-0014). (Ver `02`, `10`.)
+Una sola plataforma atiende desde un *startup* en tier **Starter** hasta una empresa regulada en tier **VIP**, sin cambiar de producto. La estrategia de multi-tenancy es **híbrida** (ADR-0005): *schema* compartido con discriminador `tenant_id` para Starter/Growth, y **base de datos física dedicada** para Enterprise/VIP. En Docker Swarm, los tenants VIP reciben **recursos dedicados**: nodos de cómputo aislados mediante *Placement Constraints*, *workers* exclusivos, réplicas de lectura en contenedores propios, colas prioritarias y retención de logs extendida (ADR-0014). (Ver `02`, `10`.)
 
 ### Pilar 3 — *Zero-friction* para desarrolladores
 El desarrollador **no debe abrir la UI** para registrar su trabajo. La plataforma captura la evidencia del ciclo de vida del código —*commits* y *pull requests* de GitHub/GitLab con *tags* como `Resolves #102 [Time: 2h]`— la procesa de forma asíncrona a través de colas, y la transforma en registros de tiempo verificables y en eventos de metering. La experiencia de onboarding también es sin fricción: captura de *lead* → *provisioning* de tenant en caliente → recursos en base de datos → email de bienvenida asíncrono. (Ver `06`, `08`.)
@@ -64,7 +64,7 @@ flowchart LR
     A --> D["Stack: FastAPI + Next.js<br/>RabbitMQ + TimescaleDB<br/>Nx monorepo"]
     B --> D
     C --> D
-    D --> E["Operación: Docker Compose → Kubernetes<br/>500+ tenants, recursos VIP dedicados"]
+    D --> E["Operación: Docker Compose & Swarm<br/>500+ tenants, recursos VIP dedicados"]
     E --> F["FinOps de plataforma:<br/>cost attribution por tenant"]
 ```
 

@@ -2,16 +2,16 @@
 
 > Especificación original: **§13**. Relacionado: `10` (infraestructura), `14` (tiers), `01` (ROI), `12` (métricas).
 >
-> **Estado de implementación (2026-07-05):** ver [`PROJECT_STATUS.md`](../../PROJECT_STATUS.md) para el detalle actualizado. Esta sección se mantiene como referencia de arquitectura; los marcadores de progreso (`✅`/`🟡`/`❌`) reflejan el estado real.
+> **Estado de implementación (2026-07-12):** ver [`PROJECT_STATUS.md`](../../PROJECT_STATUS.md) para el detalle actualizado. Esta sección se mantiene como referencia de arquitectura; los marcadores de progreso (`✅`/`🟡`/`❌`) reflejan el estado real.
 
 ## 1. Roadmap en 4 fases
 
 | Fase | Objetivo | Alcance técnico | Entorno | Progreso |
 |---|---|---|---|---|
-| **F1 — MVP** | Validar producto y landing | Landing SSG + ROI calculator + pricing; *core* PM (proyectos/tareas); timer/manual; auth + RBAC básico; FinOps mínimo (margen simple) | Docker Compose | **~70%** |
+| **F1 — MVP** | Validar producto y landing | Landing SSG + ROI calculator + pricing; *core* PM (proyectos/tareas); timer/manual; auth + RBAC básico; FinOps mínimo (margen simple) | Docker Compose | **100%** |
 | **F2 — Multi-tenant estable + metering** | Cobrar por uso | Multi-tenancy híbrida (Starter/Growth shared, Enterprise schema); Outbox + eventos; webhook Git; metering (OpenMeter) + Stripe para Starter/Enterprise; observabilidad básica | Docker Compose + staging cloud | **~10%** |
-| **F3 — Enterprise + VIP en K8s** | Aislamiento físico y escala | Migración a Kubernetes; **recursos VIP** (DB dedicada, workers exclusivos, Node Affinity, colas prioritarias, retención extendida); analítica predictiva de SLA; HPA por cola | Kubernetes (1 región) | **0%** |
-| **F4 — HA multi-región** | Resiliencia y SLA 99,99 % | Activa-pasiva multi-AZ/region; PITR y DR probados (game-days); DR RTO/RPO objetivos; *cost attribution* maduro | Kubernetes multi-región | **0%** |
+| **F3 — Enterprise + VIP en Swarm** | Aislamiento físico y escala | Escalado Swarm/Compose; **recursos VIP** (DB dedicada, workers exclusivos, Swarm Placement Constraints, colas prioritarias, retención extendida); analítica predictiva de SLA; auto-escalado de workers | Docker Swarm (1 región) | **0%** |
+| **F4 — HA multi-región** | Resiliencia y SLA 99,99 % | Activa-pasiva multi-AZ/region; PITR y DR probados (game-days); DR RTO/RPO objetivos; *cost attribution* maduro | Docker Swarm multi-nube / multi-región | **0%** |
 
 ### F1 — MVP: desglose de progreso
 
@@ -25,9 +25,9 @@
 | Traefik gateway (routing, middlewares, rate limiting) | ✅ | api.saas.local, security-headers, ratelimit |
 | Libs Python (ddd-core, db-clients, security-utils) | ✅ | Tests en verde |
 | Design tokens FinOps dark | ✅ | tokens.css, tokens.json, formatCLP |
-| Landing page (Next.js App Router) | 🚧 | Stub — pendiente bootstrap |
-| Dashboard app (Next.js App Router) | 🚧 | Stub — pendiente bootstrap |
-| Tests E2E en Docker | 🚧 | Pendiente |
+| Landing page (Next.js App Router) | ✅ | Hero, features, ROI calculator, pricing, CTA — FinOps dark |
+| Dashboard app (Next.js App Router) | ✅ | Sidebar, KPIs, tabla margen, activity feed |
+| Tests E2E en Docker | ✅ | Suite de integración e2e-tests completada |
 
 ### F2 — Multi-tenant + metering: desglose de progreso
 

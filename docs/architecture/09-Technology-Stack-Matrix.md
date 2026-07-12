@@ -21,11 +21,11 @@
 | **Billing (facturación)** | **Stripe Billing** | Invoicing, *dunning*, impuestos, métodos de pago | Cumplimiento fiscal y pagos maduros | — | ADR-0011 |
 | **Identity / SSO** | IdP interno + federación **SAML 2.0 / OIDC** | MFA, SSO empresarial, JWKS rotativo | Aislamiento por tenant + auditoría | Auth0 (costo y lock-in) | — |
 | **Secret management** | **HashiCorp Vault** (o AWS Secrets Manager) | Dynamic secrets, rotación de credenciales DB/claves JWT | Sin secretos en imágenes/repos | Secrets en ENV planos (inseguro) | ADR-0013 |
-| **Edge / proxy** | **Traefik** | Routing landing `/` + app `/app`, TLS automático, métricas | Configuración declarativa y *labels* Docker/K8s | Nginx (config manual para DevOps) | — |
+| **Edge / proxy** | **Traefik** | Routing landing `/` + app `/app`, TLS automático, métricas | Configuración declarativa y *labels* Docker/Swarm | Nginx (config manual para DevOps) | — |
 | **Monorepo / tooling** | **Nx + `@nxlv/python`** | TS native + Python first-class; caché de tareas, affected | Codegen de contratos unificado | run-commands simple (sin caché); repos separados (sincronía de contratos rota) | ADR-0004 |
 | **Codegen de contratos** | **OpenAPI** (FastAPI→clientes TS) + **AsyncAPI** (eventos→Pydantic) | Contratos tipados productor↔consumidor | Cambios rompen en CI, no en producción | Contratos manuales (deriva) | ADR-0004 |
 | **Container runtime (dev)** | **Docker Compose** | Stack completo local reproducible | Onboarding sin fricción | Kind/Minikube para dev (pesado) | ADR-0014 |
-| **Orquestación (prod)** | **Kubernetes** | HPA, Node Affinity/Taints VIP, StatefulSets, operator ecosystem | Aislamiento físico VIP (noisy neighbor) | Nomad (menos ecosistema para esto) | ADR-0014 |
+| **Orquestación (prod)** | **Docker Swarm** | Replicación de servicios, Placement Constraints VIP, rolling updates | Aislamiento físico VIP (noisy neighbor) sin complejidad | Nomad (menos ecosistema para esto) | ADR-0014 |
 | **CI/CD** | GitHub Actions / GitLab CI | Integración con webhooks Git y SAST/DAST | Pipeline DevSecOps (ver `13`) | Jenkins (mantenimiento) | — |
 
 ## 2. Versiones y soporte (OQ-3)
@@ -44,7 +44,7 @@ Convención del SAD: **1–2 *snippets* representativos por concepto arquitectó
 
 ## 4. Consideraciones transversales
 - **Poliglotismo gobernado:** Python (backend/workers) y TS (frontend) coexisten vía contratos generados (ADR-0004); el `@nxlv/python` da a Python tratamiento de *first-class* en Nx.
-- **Neutralidad de nube:** las elecciones (PG, MinIO, OTel, Traefik) son portables on-prem/cloud, alineadas con la promesa Docker Compose→K8s.
+- **Neutralidad de nube:** las elecciones (PG, MinIO, OTel, Traefik) son portables on-prem/cloud, alineadas con la promesa Docker Compose y Swarm.
 - **Costo de operación:** cada componente añadido (OpenSearch, Tempo) se justifica por una capacidad diferenciadora; los opcionales (OpenSearch) pueden posponerse por fase (`16`).
 
 El detalle de infraestructura (cómo se ensamblan estos componentes) está en `10`; la organización del monorepo en `15`.

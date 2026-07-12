@@ -81,7 +81,7 @@ async def _check(redis, key: str, quota: Quota) -> bool:
 
 | Superficie | Mecanismo |
 |---|---|
-| **En tránsito** | TLS 1.3 universal (edge + mTLS interno opcional en K8s); HSTS con *preload* |
+| **En tránsito** | TLS 1.3 universal (edge + comunicación cifrada interna de red overlay de Docker); HSTS con *preload* |
 | **En reposo (BBDD)** | AES-256 transparente (volúmenes cifrados / tablespace cifrado PG) |
 | **En reposo (objetos)** | MinIO SSE-KMS (AES-256); backups cifrados |
 | **Secretos** | Vault *Transit* (JWT), *dynamic DB credentials*; rotación automática |
@@ -195,7 +195,7 @@ async def test_cross_tenant_isolation(client, token_tenant_a, resource_in_tenant
 ## 8. Hardening de imágenes
 
 - Imágenes **no-root**, *distroless*/*slim*, multistage (`dockerfile-optimizer`), sin shell cuando es posible.
-- *Read-only root filesystem* en K8s; *drop ALL* capabilities.
+- *Read-only root filesystem* en el contenedor (`read_only: true` en Compose); *drop ALL* capabilities.
 - Firmas **Cosign** + verificación en el *admission controller* (Solo imágenes firmadas despliegan).
 
 ## 9. Respuesta a incidentes

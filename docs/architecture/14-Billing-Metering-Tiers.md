@@ -113,9 +113,9 @@ async def emit_usage(openmeter, tenant_id: str, meter_code: str, total: float, d
 |---|---|---|
 | **DB aislada** | Aprovisionar StatefulSet + pool dedicado | Tenant Management → *provisioning* (`02`, `10`) |
 | **Réplicas de lectura** | Crear read-replica; enrutar lecturas a réplica | Pool dinámico + *routing* lectura/escritura |
-| **Workers exclusivos** | Deployment con afinidad VIP + cola prioritaria | Node Affinity/Taint + cola `*.vip` (`05`) |
+| **Workers exclusivos** | Servicio Swarm VIP dedicado + cola prioritaria | Swarm Placement Constraints + cola `*.vip` (`05`) |
 | **IA prioritaria** | Inferencia analítica en cola VIP; mayor cómputo | `analytics.sla.vip` (`07`) |
-| **Nodos dedicados** | Node Affinity `workloadclass=vip` + Taint | `10` |
+| **Nodos dedicados** | Swarm Placement Constraints `workloadclass=vip` | `10` |
 | **Retención logs extendida** | Política Loki por tier + export WORM MinIO | `12`, `03` |
 
 > La activación se modela como un **evento de dominio** `tier.upgraded` que dispara un *tenant provisioning job* idempotente; el cambio de tier también orquesta la **migración de datos** correspondiente (`02`, §6).

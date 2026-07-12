@@ -36,7 +36,7 @@ Cada archivo temático referencia los ADRs relevantes con el formato `ADR-00NN` 
 | `07-Predictive-Analytics-SLA.md` | Analítica predictiva y riesgo de SLA | §2.4 |
 | `08-Frontend-DesignSystem-Landing.md` | Frontend, design system, landing y onboarding | §3 |
 | `09-Technology-Stack-Matrix.md` | Matriz del stack tecnológico | §6 |
-| `10-Infrastructure-Docker-K8s.md` | Infraestructura Docker Compose y migración a K8s | §8 |
+| `10-Infrastructure-Docker-Scaling.md` | Infraestructura: Docker Compose, Swarm y Escalado | §8 |
 | `11-Caching-Performance.md` | Caché multi-nivel y rendimiento | §9 |
 | `12-Observability-Telemetry.md` | Observabilidad y telemetría | §10 |
 | `13-Security-DevSecOps.md` | Seguridad aplicada y DevSecOps | §11 |
@@ -68,7 +68,7 @@ La especificación original contiene 14 secciones. La siguiente tabla garantiza 
 | §5.1 | DDD / CQRS | `04` |
 | §5.2 | Event-driven | `05` |
 | §6 | Stack tecnológico | `09` |
-| §8 | Infraestructura Docker/K8s | `10` |
+| §8 | Infraestructura Docker/Swarm | `10` |
 | §9 | Caché | `11` |
 | §10 | Observabilidad | `12` |
 | §11 | Seguridad / DevSecOps | `13` |
@@ -89,7 +89,7 @@ Términos **sobrecargados** o propios del dominio. Su uso es consistente en todo
 | **Usuario** | Persona autenticada que pertenece a un tenant. Tiene exactamente un rol dentro del tenant (uno de los 9 roles del sistema). |
 | **Cliente externo** | Usuario de tipo colaborador invitado por un tenant (p. ej. un cliente final del tenant que consulta avance o aprueba entregables). Permisos acotados y de solo lectura por defecto. |
 | **Tier** | Nivel comercial/operativo del tenant: **Starter**, **Growth**, **Enterprise** o **VIP/Custom**. Determina el modelo de aislamiento de datos, los límites de recursos y la activación de recursos VIP. |
-| **VIP resource** | Recurso de infraestructura reservado y dedicado a un tenant VIP: base de datos aislada, réplicas de lectura, workers exclusivos, nodos K8s dedicados (Node Affinity/Taint), colas prioritarias y retención de logs extendida. |
+| **VIP resource** | Recurso de infraestructura reservado y dedicado a un tenant VIP: base de datos aislada, réplicas de lectura, workers exclusivos, nodos Swarm dedicados (Placement Constraints), colas prioritarias y retención de logs extendida. |
 | **Meter / Metering** | Unidad medible de consumo de un recurso facturable (p. ej. `api.calls`, `storage.gb`, `ai.tokens`, `tracked.hours.vip`). El pipeline de metering captura, agrega y persiste el uso para facturación. |
 | **Ledger** | Registro contable o de auditoría **append-only** e inmutable (tamper-evident). Se aplica Event Sourcing exclusivamente sobre ledgers (financiero, auditoría, metering). |
 | **Audit ledger** | Ledger específico de auditoría de seguridad: eventos de identidad, accesos y cambios críticos, con encadenamiento por hash y export WORM a MinIO. |
@@ -132,4 +132,4 @@ Términos **sobrecargados** o propios del dominio. Su uso es consistente en todo
 | ADR-0011 | Billing OpenMeter (metering) + Stripe (facturación) | `14` |
 | ADR-0012 | Object Storage MinIO (S3-compatible, WORM) | `03`, `13` |
 | ADR-0013 | Audit ledger append-only + hash chaining | `03` |
-| ADR-0014 | VIP resource activation en K8s (Node Affinity/Taints) | `10`, `14` |
+| ADR-0014 | VIP resource activation en Docker Swarm (Placement Constraints) | `10`, `14` |

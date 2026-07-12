@@ -77,7 +77,7 @@ La coherencia es total: el mismo *ledger* que alimenta el margen del cliente ali
 | Detección de overrun de contrato | ~30 días (cierre mensual) | ~48 h (tiempo real) | Eventos `TimeLogged` → *ledger* continuo |
 | Tasa de incumplimiento de SLA | Línea base del cliente | −30 a −50 % | Alerta temprana + priorización VIP |
 | Esfuerzo de registro de horas | Manual, ~5 % de evasión | Automático vía Git, evasión ≈ 0 | *Webhook* asíncrono, sin UI |
-| Precisión de cost attribution por tenant | Estimación global | Imputación por etiqueta + metering | K8s labels + meters TimescaleDB |
+| Precisión de cost attribution por tenant | Estimación global | Imputación por etiqueta + metering | Docker labels + meters TimescaleDB |
 
 > Los valores son **referencias de diseño** para el modelo de ROI; se calibran con datos reales en la Fase 2 del roadmap (`16`).
 

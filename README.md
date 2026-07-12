@@ -24,17 +24,18 @@ Una plataforma donde **cada hora trabajada es un evento financiero de primera cl
 | **Workers (FastStream)** | ✅ Funcional | `git_consumer` (parsea `Resolves #N [Time: Xh]`), `margin_consumer` (idempotente). DLX + colas prioritarias. |
 | **Libs Python** | ✅ Funcional | `ddd-core` (DomainEvent, AggregateRoot, OutboxEvent), `db-clients` (session factory, RLS listener), `security-utils` (jwt, bcrypt, hmac) |
 | **Libs TypeScript** | ✅ Parcial | `ui-tokens` (tokens.css/json), `design-system` (TIERS CLP), `api-contracts` (interfaces) |
-| **Frontend (Next.js)** | 🚧 Pendiente | `apps/app` y `apps/landing` son marcadores de paquete — pendiente bootstrap con App Router |
+| **Frontend (Next.js)** | ✅ Funcional | Frontend bootstrapped (landing y dashboard app) con Next.js App Router. |
 | **Base de datos** | ✅ Funcional | Migración 0001: 15 tablas, RLS (FORCE), 2 hypertables TimescaleDB, 2 continuous aggregates, audit ledger hash-chainado |
 | **Infraestructura** | ✅ Funcional | Docker Compose: PostgreSQL/TimescaleDB, Valkey, RabbitMQ, MinIO (WORM), OpenSearch, Traefik, migrate service |
 | **Documentación (SAD)** | ✅ Completa | 17 docs modulares + 14 ADRs + 3 diagramas (C4 + ERD) |
+| **Tests E2E** | ✅ Funcional | Suite de pruebas de integración E2E bajo Docker Compose (`apps/e2e-tests`). |
 
 ## 🏛️ Los tres pilares
 
 | Pilar | Descripción |
 |---|---|
 | **PM + FinOps convergentes** | Margen y SLA derivados de *ledgers* inmutables (Event Sourcing en lo financiero); CRUD ágil en el *core* de PM. |
-| **Aislamiento enterprise híbrido** | *Schema* compartido con `tenant_id` (Starter/Growth) + **base de datos dedicada** (Enterprise/VIP), con recursos VIP físicamente aislados en K8s. |
+| **Aislamiento enterprise híbrido** | *Schema* compartido con `tenant_id` (Starter/Growth) + **base de datos dedicada** (Enterprise/VIP), con recursos VIP físicamente aislados en Docker Swarm. |
 | **Zero-friction para devs** | Registro de horas vía *webhooks* de Git (`Resolves #102 [Time: 2h]`) y onboarding de tenant en caliente, sin abrir la UI. |
 
 ## 🧱 Stack tecnológico
@@ -47,8 +48,9 @@ Una plataforma donde **cada hora trabajada es un evento financiero de primera cl
 | **Frontend** | Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · TanStack Query · Zustand |
 | **Observabilidad** | OpenTelemetry → Prometheus + Loki + Tempo + Grafana |
 | **Billing** | OpenMeter (metering) + Stripe Billing |
-| **Infra** | Docker Compose → Kubernetes · Traefik · Vault |
+| **Infra** | Docker Compose & Swarm · Traefik · Vault |
 | **Tooling** | Monorepo Nx + `@nxlv/python` |
+| **Tests E2E** | Pytest · HTTPX · Docker SDK |
 
 ## 🚀 Arranque rápido
 
@@ -109,16 +111,16 @@ El SAD es **modular**: un archivo por dominio + índice + apéndice de ADRs + di
 | Identidad, RBAC y auditoría | [`03-Identity-Security-RBAC.md`](docs/architecture/03-Identity-Security-RBAC.md) |
 | El dominio y CQRS/ES | [`04-Domain-Design-DDD-CQRS.md`](docs/architecture/04-Domain-Design-DDD-CQRS.md) |
 | El corazón financiero | [`06-FinOps-TimeTracking-Engine.md`](docs/architecture/06-FinOps-TimeTracking-Engine.md) |
-| Infraestructura y despliegue | [`10-Infrastructure-Docker-K8s.md`](docs/architecture/10-Infrastructure-Docker-K8s.md) |
+| Infraestructura y despliegue | [`10-Infrastructure-Docker-Scaling.md`](docs/architecture/10-Infrastructure-Docker-Scaling.md) |
 | Billing, metering y tiers | [`14-Billing-Metering-Tiers.md`](docs/architecture/14-Billing-Metering-Tiers.md) |
 | Las decisiones (ADRs) | [`ADR-Records.md`](docs/architecture/ADR-Records.md) |
 
 ## 🗺️ Roadmap
 
-1. **MVP** — ✅ Backend + infraestructura en Docker Compose. 🚧 Frontend Next.js pendiente.
+1. **MVP** — ✅ Backend + infraestructura en Docker Compose + Frontend bootstrapped + Suite E2E.
 2. **Multi-tenant estable + metering** (Starter/Enterprise).
-3. **Enterprise + VIP en K8s** — recursos dedicados, analítica predictiva de SLA.
-4. **HA multi-región** — activa-pasiva, DR probado, RTO/RPO objetivos.
+3. **Enterprise + VIP en Docker Swarm** — recursos dedicados, analítica predictiva de SLA.
+4. **HA multi-región** — activa-pasiva, DR probado, RTO/RPO objetivos en Docker.
 
 Detalle en [`16-Roadmap-FinOps-Risks.md`](docs/architecture/16-Roadmap-FinOps-Risks.md).
 

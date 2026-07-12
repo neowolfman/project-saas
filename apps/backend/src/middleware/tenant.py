@@ -26,7 +26,7 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
             "/favicon.ico",
         }
 
-        is_global = path in global_paths or path.startswith(("/docs", "/webhooks", "/projects/test"))
+        is_global = path in global_paths or path.startswith(("/docs", "/webhooks"))
 
         tenant_id_str = request.headers.get("X-Tenant-ID")
         subdomain = self._get_subdomain(request)

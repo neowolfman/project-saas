@@ -223,7 +223,7 @@ versioning: enabled
 
 ## 6. Cifrado y gestión de secretos
 
-- **En tránsito:** TLS 1.3 universal (edge + service mesh interno en K8s); HSTS, *certificate transparency*.
+- **En tránsito:** TLS 1.3 universal (edge + comunicación cifrada interna de red overlay de Docker); HSTS, *certificate transparency*.
 - **En reposo:** AES-256 (transparente en PG vía *tablespaces* cifrados / volumen cifrado; MinIO SSE; backups cifrados).
 - **Secretos:** **HashiCorp Vault** (primario) o **AWS Secrets Manager** (alternativa cloud). Ningún secreto en imagen ni en repo. Rotación de credenciales de BBDD por *dynamic secrets*.
 - **Claves de firma JWT:** almacenadas en Vault *Transit* con rotación programada; el `kid` publica el JWKS público.
